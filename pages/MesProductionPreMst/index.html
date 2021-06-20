@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<script src="../../js/qs.js"></script>
+		<!-- 引入vue -->
+		<script src="../../js/vue.min.js"></script>
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../../css/elementUi.min.css">
+		<link rel="stylesheet" href="../../css/vant.min.css" />
+		<script src="../../js/common.js"></script>
+		<!-- 引入组件库 -->
+		<script src="../../js/elementUi.min.js"></script>
+		<script src="../../js/vant.min.js"></script>
+		<script src="../../js/mui.min.js"></script>
+		<link href="../../css/mui.min.css" rel="stylesheet" />
+		<script src="../../js/utils.js"></script>
+		<link rel="stylesheet" href="../../css/MesProductionPreMst.css">
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../../css/vxe-table-2.9.5.min.css">
+		<!-- 引入脚本 -->
+		<script src="../../js/xe-utils.min.js"></script>
+		<script src="../../js/vxe-table-2.9.5.min.js"></script>
+		<script src="../../js/es5-shim.min.js"></script>
+		<script src="../../js/promise-6.1.0.js"></script>
+	</head>
+	<body>
+		<div id="app" class="page">
+			<div class="custom-container-full">
+				<div class="custom-container-full__header" ref="header">
+					<div>
+						<div class="custom-container-header">
+							<div class="transform-cx">
+								<div class="cch-block">
+									<el-page-header @back="goBack" content="新增产前确认">
+										<template #content>
+											<el-button type="warning" icon="el-icon-finished" @click="openSaiXuan" size="small">筛选</el-button>
+											<el-button type="success" icon="el-icon-plus" @click="insertEvent" size="small">新增</el-button>
+										</template>
+									</el-page-header>
+									<!-- <el-button icon="el-icon-back" @tap.native="goBack" size="small" style="margin-right: 10px;">返回</el-button> -->
+									<!-- <el-select v-model="formData.LINE_ID" placeholder="请选择线别" style="width: 200px" filterable clearable size="small">
+										<el-option v-for="item in linesList" :key="item.value" :value="item.value" :label="item.label"></el-option>
+									</el-select>
+									<el-input v-model="formData.WO_NO" style="width: 200px" clearable placeholder="请输入工单号" size="small"></el-input>
+									<el-input v-model="formData.PART_NO" style="width: 200px" clearable placeholder="请输入料号" size="small"></el-input> -->
+									<!-- <el-button type="primary" icon="el-icon-search" @click.prevent="searchClick" size="small">搜索</el-button> -->
+									<!-- <el-button type="warning" icon="el-icon-finished" @click="openSaiXuan" size="small">筛选</el-button>
+									<el-button type="success" icon="el-icon-plus" @click="insertEvent" size="small">新增</el-button> -->
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="custom-container-full__body" ref="body" id="full">
+					<div class="out-table-container" :style="{
+						height: tableHeight
+					}">
+						<van-swipe-cell v-for="(dataItem,index) in mainTable" :key="dataItem.MST_NO" stop-propagation>
+							<el-card class="box-card" style="margin-bottom: 10px;">
+								<div slot="header" class="clearfix">
+									<span>产前确定编号: {{dataItem.MST_NO}}</span>
+									<div style="float: right;">
+										<!-- <el-button type="primary" @tap.native="editRow(scoped.row)" size="small">编辑</el-button>
+									<el-button type="danger" @tap.native="removeClick(scoped.row)" size="small">删除</el-button> -->
+										<!-- <el-link type="primary" style="margin-right: 10px;line-height: 1rem;" icon="el-icon-edit">编辑</el-link>
+									<el-link type="danger" style="line-height: 1rem;" icon="el-icon-delete">删除</el-link> -->
+										<el-tag :type="dataItem.END_STATUS === 'Y' ? 'success':'danger'" effect="dark" size="mini">
+											{{dataItem.END_STATUS === 'Y' ? '正确':'错误'}}
+										</el-tag>
+									</div>
+								</div>
+								<div>
+									<el-row gutter="20">
+										<el-col span="12"><span>线别: {{dataItem.LINE_NAME}}</span></el-col>
+										<el-col span="12"><span>工单号: {{dataItem.WO_NO}}</span></el-col>
+									</el-row>
+									<el-row gutter="20">
+										<el-col span="12"><span>料号: {{dataItem.PART_NO}}</span></el-col>
+										<el-col span="12"><span>料号名称: {{dataItem.PART_NAME}}</span></el-col>
+									</el-row>
+									<el-row gutter="20">
+										<el-col span="12"><span>客户: {{dataItem.CUSTOMER_NAME}}</span></el-col>
+										<el-col span="12"><span>机种: {{dataItem.MODEL_NAME}}</span></el-col>
+									</el-row>
+									<el-row gutter="20">
+										<el-col span="12"><span>生产时间: {{dataItem.PRODUCTION_TIME}}</span></el-col>
+										<!-- <el-col span="12"><span>判断状态: {{dataItem.END_STATUS === 'Y' ? "正确"："错误"}}</span></el-col> -->
+									</el-row>
+								</div>
+								<div style="display: flex;justify-content: space-between;border-top: 1px solid #EBEEF5;padding-top: 5px;">
+									<div>创建人:{{dataItem.CREATOR}}</div>
+									<div>创建时间:{{dataItem.CREATIME}}</div>
+								</div>
+							</el-card>
+							<template slot="right">
+								<div style="display: flex;flex-flow: column;height: 100%;padding-left: 1px;">
+									<div style="flex: 1;">
+										<el-button type="primary" @click="editRow(dataItem)" style="height: 100%;width: 100%;border-radius: 0px 4px 0px 0px;">编辑</el-button>
+									</div>
+									<div style="flex: 1;">
+										<el-button type="danger" @click="removeClick(dataItem,index)" style="height: 100%;width: 100%;border-radius: 0px 0px 4px 0px;">删除</el-button>
+									</div>
+								</div>
+							</template>
+						</van-swipe-cell>
+					</div>
+				</div>
+				<div class="custom-container-full__footer" ref="footer">
+					<el-pagination :current-page="formData.Page" :page-size="formData.Limit" :page-sizes="[15, 25, 35, 45]" layout="total, sizes, prev, pager, next, jumper"
+					 :total="totalPage" @size-change="handleSizeChange" @current-change="handleCurrentChange" />
+				</div>
+
+			</div>
+			<!-- modal -->
+			<!-- 抽屉 筛选 -->
+			<van-popup title="筛选" v-model="drawer" round position="bottom" direction="btt" size="50%" :before-close="handleClose"
+			 :with-header="false">
+				<div style="padding: 20px 20px  4px 20px;display: flex;flex-flow: column;height: 100%;overflow: hidden;">
+					<!-- <el-card class="box-card" style="flex: 1;overflow: auto;"> -->
+					<!-- <div slot="header" class="clearfix">
+							<span>搜索</span>
+							<el-button style="float: right; padding: 3px 0" type="text" @tap.native="searchClick">确定</el-button>
+							<el-button style="float: right; padding: 3px 0;margin-right: 20px" type="text" @tap.native="resetListQuery">重置</el-button>
+						</div> -->
+					<el-form style="flex: 1;overflow: auto;" class="custom-form" ref="formData" label-width="80px" :model="formData"
+					 size="mini">
+						<el-form-item label="线别" prop="LINE_ID">
+							<!-- <el-select v-model="formData.LINE_ID" style="width: 100%" clearable filterable placeholder="  ">
+									<el-option v-for="item in linesList" :key="item.value" :value="item.value" :label="item.label" />
+								</el-select> -->
+							<el-input v-model="formData.LINE_NAME" readonly clickable @click.native="showLinePicker=true" clearable></el-input>
+						</el-form-item>
+						<el-form-item label="工单号" prop="WO_NO">
+							<div style="display: flex;align-items: center;">
+								<el-input v-model="formData.WO_NO" clearable></el-input>
+								<div slot="suffix" @tap="openBarcode('WO_NO')">
+									<img src="../../images/saoma.png" alt="saoma" class="saoma-icon">
+								</div>
+							</div>
+						</el-form-item>
+						<el-form-item label="料号" prop="PART_NO">
+							<div style="display: flex;align-items: center;">
+								<el-input v-model="formData.PART_NO" clearable></el-input>
+								<div @tap="openBarcode('PART_NO')">
+									<img src="../../images/saoma.png" alt="saoma" class="saoma-icon">
+								</div>
+							</div>
+						</el-form-item>
+						<el-form-item label="料号名称" prop="PART_NAME">
+							<el-input v-model="formData.PART_NAME" clearable></el-input>
+						</el-form-item>
+						<el-form-item label="机种" prop="MODEL_ID">
+							<!-- <el-select clearable v-model="formData.MODEL_ID" placeholder=" ">
+									<div style="background: #fff;background: #fff;top: 0;z-index: 99"></div>
+									<div style="background: #fff;bottom: 0;z-index: 99"></div>
+									<div style="width: 600px;display: flex;padding: 0 20px 0 10px;position: sticky;top: 6px;background: #fff;z-index: 90">
+										<el-input v-model="listQuery2.Key" placeholder="请输入关键词"></el-input>
+										<el-button type="primary" icon="el-icon-search" @tap.native.prevent="searchQueryList2">搜索</el-button>
+									</div>
+									<el-option style="width: 600px" v-for="item in customerModelList" :key="item.ID" :label="item.MODEL" :value="item.ID"></el-option>
+									<div style="width: 600px;position: sticky;bottom: 6px;background: #fff;z-index: 90;padding-left: 15px">
+										<el-pagination :pager-count="5" :current-page="listQuery2.Page" :page-size="listQuery2.Limit" :page-sizes="[10, 20, 30, 40]"
+										 layout="total, sizes, prev, pager, next, jumper" :total="listQuery2.totalPage" @size-change="listQuerySizeChange2"
+										 @current-change="listQueryCurrentChange2" />
+									</div>
+								</el-select> -->
+							<el-input v-model="formData.MODEL_NAME" readonly clickable @click.native="showModelPicker=true" clearable></el-input>
+						</el-form-item>
+						<el-form-item label="客户" prop="CUSTOMER_ID">
+							<!-- <el-select clearable style="width:100%" v-model="formData.CUSTOMER_ID" placeholder=" ">
+									<div style="position: absolute;width: 100%;height: 6px;background: #fff;background: #fff;top: 0;z-index: 99"></div>
+									<div style="position: absolute;width: 100%;height: 6px;background: #fff;background: #fff;bottom: 0;z-index: 99"></div>
+									<div style="width: 600px;display: flex;padding: 0 20px 0 10px;position: sticky;top: 6px;background: #fff;z-index: 90">
+										<el-input v-model="listQuery.Key" placeholder="请输入关键词"></el-input>
+										<el-button type="primary" icon="el-icon-search" @tap.native.prevent="searchQueryList">搜索</el-button>
+									</div>
+									<el-option style="width: 600px" v-for="item in customerList" :key="item.ID" :label="item.CUSTOMER" :value="item.ID">
+										<span style="float: left">{{ item.CUSTOMER }}</span>
+										<span style="float: right;">{{ item.NATIONALITY }}</span>
+									</el-option>
+									<div style="width: 600px;position: sticky;bottom: 6px;background: #fff;z-index: 90;padding-left: 15px">
+										<el-pagination :pager-count="5" :current-page="listQuery.Page" :page-size="listQuery.Limit" :page-sizes="[10, 20, 30, 40]"
+										 layout="total, sizes, prev, pager, next, jumper" :total="listQuery.totalPage" @size-change="listQuerySizeChange"
+										 @current-change="listQueryCurrentChange" />
+									</div>
+								</el-select> -->
+							<el-input v-model="formData.CUSTOMER_NAME" readonly clickable @click.native="showCustomerPicker=true" clearable></el-input>
+						</el-form-item>
+						<el-form-item label="创建时间" prop="CREATIME">
+							<el-date-picker style="width: 100%" v-model="formData.CREATIME" type="daterange" value-format="yyyy-MM-dd"
+							 start-placeholder="开始日期" end-placeholder="结束日期"></el-date-picker>
+						</el-form-item>
+					</el-form>
+					<!-- </el-card> -->
+					<el-row gutter="0" style="margin-top: 10px;">
+						<el-col span="12">
+							<el-button type="primary" @click="searchClick" style="width:100%;border-radius: 4px 0px 0px 4px;">搜索</el-button>
+						</el-col>
+						<el-col span="12">
+							<el-button type="danger" @click="resetListQuery" style="width:100%;border-radius: 0px 4px 4px 0px;">重置</el-button>
+						</el-col>
+					</el-row>
+				</div>
+			</van-popup>
+			<van-popup v-model="showLinePicker" round position="bottom">
+				<van-picker show-toolbar :columns="linesList" value-key="label" title="线别" item-height="40" visible-item-count="10"
+				 @cancel="showLinePicker = false" @confirm="dealLinePicker" />
+			</van-popup>
+			<van-popup v-model="showModelPicker" round position="bottom">
+				<van-picker show-toolbar :columns="customerModelList" value-key="MODEL" title="机种" item-height="40"
+				 visible-item-count="10" @cancel="showModelPicker = false" @confirm="dealModelPicker">
+					<template #columns-top>
+						<div style="display: flex;align-items: center;padding: 5px 10px 5px 10px;background-color: #f7f8fa;">
+							<el-input v-model="listQuery2.Key" placeholder="请输入关键词" size="small"></el-input>
+							<el-button type="primary" icon="el-icon-search" @tap.native.prevent="searchQueryList2" size="small">搜索</el-button>
+						</div>
+					</template>
+					<template #columns-bottom>
+						<el-pagination :pager-count="3" :current-page="listQuery2.Page" :page-size="listQuery2.Limit" :page-sizes="[10, 20, 30, 40]"
+						 layout="total, prev, pager, next,jumper" :total="listQuery2.totalPage" @size-change="listQuerySizeChange2"
+						 @current-change="listQueryCurrentChange2" />
+					</template>
+				</van-picker>
+			</van-popup>
+			<van-popup v-model="showCustomerPicker" round position="bottom">
+				<van-picker show-toolbar :columns="customerList" value-key="CUSTOMER" title="客户" item-height="40"
+				 visible-item-count="10" @cancel="showCustomerPicker = false" @confirm="dealCustomerPicker">
+					<template #columns-top>
+						<div style="display: flex;align-items: center;padding: 5px 10px 5px 10px;background-color: #f7f8fa;">
+							<el-input v-model="listQuery.Key" placeholder="请输入关键词" size="small"></el-input>
+							<el-button type="primary" icon="el-icon-search" @tap.native.prevent="searchQueryList" size="small">搜索</el-button>
+						</div>
+					</template>
+					<template #columns-bottom>
+						<el-pagination :pager-count="3" :current-page="listQuery.Page" :page-size="listQuery.Limit" :page-sizes="[10, 20, 30, 40]"
+						 pager-count="2" layout="total, prev, pager, next,jumper" :total="listQuery.totalPage" @size-change="listQuerySizeChange"
+						 @current-change="listQueryCurrentChange" />
+						<!-- <van-pagination
+					   v-model="listQuery.Page"
+					   items-per-page="listQuery.Limit"
+					   :total-items="listQuery.totalPage"
+					   :show-page-size="4"
+					   force-ellipses
+					 /> -->
+					</template>
+				</van-picker>
+			</van-popup>
+		</div>
+		<script type="text/javascript" charset="utf-8">
+			mui.init({
+				preloadPages: [ // 页面预加载
+					{
+						url: '/pages/ModifyMesMst/index.html',
+						id: 'ModifyMesMst'
+					}
+				],
+				// pullRefresh: {
+				// 	container: '#full',
+				// 	down: {
+				// 		style: 'circle', //必选，下拉刷新样式，目前支持原生5+ ‘circle’ 样式
+				// 		color: '#2BD009', //可选，默认“#2BD009” 下拉刷新控件颜色
+				// 		height: '50px', //可选,默认50px.下拉刷新控件的高度,
+				// 		range: '100px', //可选 默认100px,控件可下拉拖拽的范围
+				// 		offset: '0px', //可选 默认0px,下拉刷新控件的起始位置
+				// 		auto: false, //可选,默认false.首次加载自动上拉刷新一次
+				// 		callback: function() {
+				// 			vm.resetListQuery()
+				// 			vm.computedTableHeight()
+				// 			vm.getIndex(true)
+				// 		} //必选，刷新函数，根据具体业务来编写，比如通过ajax从服务器获取新数据；
+				// 	}
+				// }
+			});
+		</script>
+		<script>
+			var vm = new Vue({
+				el: '#app',
+				data: {
+					formData: {
+						PART_NO: '',
+						WO_NO: '',
+						LINE_ID: '',
+						LINE_NAME: '',
+						CREATIME: '',
+						MODEL_ID: '',
+						MODEL_NAME: '',
+						CUSTOMER_ID: '',
+						CUSTOMER_NAME: '',
+						Page: 1,
+						Limit: 15,
+						Key: ''
+					},
+					totalPage: 0,
+					drawer: false,
+					linesList: [],
+					mainTable: [],
+					loading: false,
+					tableHeight: '200px',
+					listQuery: {
+						Key: '',
+						Page: 1,
+						Limit: 10,
+						totalPage: 0
+					},
+					listQuery2: {
+						Key: '',
+						Page: 1,
+						Limit: 10,
+						totalPage: 0
+					},
+					customerList: [],
+					customerModelList: [],
+					field: '',
+					showLinePicker: false,
+					showModelPicker: false,
+					showCustomerPicker: false
+				},
+				methods: {
+					openBarcode: function(field) {
+						this.field = field
+						createWithoutTitle('/pages/barcode_scan.html', {
+							titleNView: {
+								type: 'float',
+								backgroundColor: 'rgb(34, 34, 34)',
+								titleText: '扫一扫',
+								titleColor: '#FFFFFF',
+								autoBackButton: true
+							}
+						});
+					},
+					openSaiXuan: function() {
+						this.drawer = true
+						// plus.webview.currentWebview().setPullToRefresh({support:false}) // 禁用下拉
+					},
+					handleClose: function() {
+						this.drawer = false
+						// plus.webview.currentWebview().setPullToRefresh({support: true, style: 'circle'}) // 启用下拉
+					},
+					goBack: function() {
+						mui.back()
+					},
+					insertEvent: function() {
+						var webview = plus.webview.getWebviewById('ModifyMesMst')
+						if (webview) {
+							mui.fire(webview, 'refresh', {
+								ID: 0
+							})
+							webview.show()
+						} else {
+							href('/pages/ModifyMesMst/index.html', 'ModifyMesMst', {
+								ID: 0
+							})
+						}
+					},
+					editRow: function(row) {
+						if (row) {
+							var ID = row.ID
+							var webview = plus.webview.getWebviewById('ModifyMesMst')
+							if (webview) {
+								mui.fire(webview, 'refresh', {
+									ID: ID
+								})
+								webview.show()
+							} else {
+								href('/pages/ModifyMesMst/index.html', 'ModifyMesMst', {
+									ID: ID
+								})
+							}
+						}
+					},
+					removeClick: function(row,pos) {
+						var that = this
+						if (row) {
+							plus.nativeUI.confirm('确定要删除该记录吗？', function(e) {
+								if(e.index !== 0){
+									return;
+								}
+								http({
+									url: 'MesProductionPreMst/DeleteBill?id=' + row.ID,
+									params: {},
+									method: 'post',
+									success: function(res) {
+										if (res.Result) {
+											// that.$refs.xTable.remove(row)
+											this.mainTable.splice(pos,1)
+											tips('success')
+											plus.nativeUI.alert("删除成功", function(e) {
+
+											}, '成功')
+										}
+									}
+								})
+							}, "警告", ["确定", "取消"])
+						}
+					},
+					handleCurrentChange: function(Page) {
+						this.formData.Page = Page
+						this.getLoadData()
+					},
+					handleSizeChange: function(Limit) {
+						this.formData.Page = 1
+						this.formData.Limit = Limit
+						this.getLoadData()
+					},
+					computedTableHeight: function() {
+						var windowHeight = document.body.clientHeight || document.documentElement.clientHeight
+						this.tableHeight = (windowHeight - 57 - 54 - 5 - 10) + 'px'
+					},
+					searchClick: function() {
+						this.formData.Page = 1
+						this.getLoadData()
+						this.drawer = false
+					},
+					resetListQuery: function() {
+						this.listQuery = {
+							Key: '',
+							Page: 1,
+							Limit: 10,
+							totalPage: 0
+						}
+						this.customerList = []
+						this.customerModelList = []
+						this.listQuery2 = {
+							Key: '',
+							Page: 1,
+							Limit: 10,
+							totalPage: 0
+						}
+						this.formData = {
+							Page: this.formData.Page,
+							Limit: this.formData.Limit,
+							Key: this.formData.Key
+						}
+						this.getcustomerList()
+						this.getModelList()
+					},
+					listQuerySizeChange: function(Limit) {
+						this.listQuery.Limit = Limit
+						this.listQuery.Page = 1
+						this.getcustomerList()
+					},
+					listQueryCurrentChange: function(Page) {
+						this.listQuery.Page = Page
+						this.getcustomerList()
+					},
+					searchQueryList: function() {
+						this.listQuery.Page = 1
+						this.getcustomerList()
+					},
+					listQueryCurrentChange2: function(Page) {
+						this.listQuery2.Page = Page
+						this.getModelList()
+					},
+					listQuerySizeChange2: function(Limit) {
+						this.listQuery2.Limit = Limit
+						this.listQuery2.Page = 1
+						this.getModelList()
+					},
+					searchQueryList2: function() {
+						this.listQuery2.Page = 1
+						this.getModelList()
+					},
+					getIndex: function(isPullFresh) {
+						var that = this
+						http({
+							url: 'MesProductionPreMst/Index',
+							method: 'get',
+							params: {},
+							success: function(res) {
+								if (res.Result) {
+									that.getLoadData(isPullFresh)
+									that.getcustomerList()
+									that.getModelList()
+									that.getLines()
+								}
+							}
+						})
+					},
+					getLoadData: function(isPullFresh) {
+						var that = this
+						that.loading = true
+						http({
+							url: 'MesProductionPreMst/LoadData',
+							method: 'get',
+							params: that.formData,
+							success: function(res) {
+								if (isPullFresh) {
+									mui('#full').pullRefresh().endPulldown()
+								}
+								that.loading = false
+								that.mainTable = res.Result || []
+								that.totalPage = res.TotalCount || 0
+							},
+							error: function(error) {
+								if (isPullFresh) {
+									mui('#full').pullRefresh().endPulldown()
+								}
+								that.loading = false
+							}
+						})
+					},
+					getcustomerList: function() {
+						var that = this
+						http({
+							url: 'SfcsProductFamily/GetcustomerList',
+							params: that.listQuery,
+							method: 'get',
+							success: function(res) {
+								if (res.Result) {
+									that.customerList = res.Result || []
+									that.listQuery.totalPage = res.TotalCount || 0
+									if (!that.customerList.length) {
+										that.customerList.push({
+											CUSTOMER: '',
+											ID: ''
+										})
+									}
+								}
+							}
+						})
+					},
+					getModelList: function() {
+						var that = this
+						http({
+							url: 'SfcsModel/LoadData',
+							method: 'get',
+							params: that.listQuery2,
+							success: function(res) {
+								if (res.Result) {
+									that.customerModelList = res.Result || []
+									that.listQuery2.totalPage = res.TotalCount || 0
+									if (!that.customerModelList.length) {
+										that.customerModelList.push({
+											MODEL: '',
+											ID: ''
+										})
+									}
+								}
+							}
+						})
+					},
+					getLines: function(isPullFresh) {
+						var Userinfo = window.localStorage.getItem('Userinfo')
+						Userinfo = Userinfo ? JSON.parse(Userinfo) : {};
+						var that = this
+						var p1 = function() {
+							return new Promise(function(resolve, reject) {
+								http({
+									url: 'SmtLines/LoadData',
+									method: 'get',
+									params: {
+										USER_ID: Userinfo.ID
+									},
+									success: function(res) {
+										if (res.Result) {
+											resolve(res)
+										} else {
+											reject(res)
+										}
+									}
+								})
+							})
+						}
+						var p2 = function() {
+							return new Promise(function(resolve, reject) {
+								http({
+									url: 'SfcsOperationLines/LoadData',
+									method: 'get',
+									params: {
+										USER_ID: Userinfo.ID
+									},
+									success: function(res) {
+										if (res.Result) {
+											resolve(res)
+										} else {
+											reject(res)
+										}
+									}
+								})
+							})
+						}
+						Promise.all([p1(), p2()]).then(function(res) {
+							if (isPullFresh) {
+								mui('#full').pullRefresh().endPulldown()
+							}
+							that.linesList = []
+							for (var i = 0; i < res.length; i++) {
+								var item = res[i]
+								var tmpItem = typeof item.Result === 'string' ? JSON.parse(item.Result) : item.Result;
+								tmpItem = tmpItem || []
+								var tmpList = []
+								for (var j = 0; j < tmpItem.length; j++) {
+									var _item = tmpItem[j]
+									tmpList.push({
+										label: _item.LINE_NAME || _item.OPERATION_LINE_NAME,
+										value: _item.ID.toString()
+									})
+								}
+								that.linesList = that.linesList.concat(tmpList)
+							}
+						}).catch(function(res) {
+							if (isPullFresh) {
+								mui('#full').pullRefresh().endPulldown()
+							}
+						})
+					},
+					dealLinePicker: function(dataItem) {
+						this.formData.LINE_ID = dataItem.value
+						this.formData.LINE_NAME = dataItem.label
+						this.showLinePicker = false
+					},
+					dealModelPicker: function(dataItem) {
+						this.formData.MODEL_ID = dataItem.ID
+						this.formData.MODEL_NAME = dataItem.MODEL
+						this.showModelPicker = false
+					},
+					dealCustomerPicker: function(dataItem) {
+						this.formData.CUSTOMER_ID = dataItem.ID;
+						this.formData.CUSTOMER_NAME = dataItem.CUSTOMER
+						this.showCustomerPicker = false
+					}
+				},
+				created: function() {
+
+				}
+			})
+			mui.plusReady(function() {
+				vm.computedTableHeight()
+				vm.getIndex()
+			})
+			document.addEventListener('refresh', function(e) {
+				vm.resetListQuery()
+				vm.computedTableHeight()
+				vm.getIndex()
+			})
+
+			// 扫码回调
+			function scaned(t, r, f) {
+				vm.$set(vm.formData, vm.field, r)
+			}
+		</script>
+	</body>
+</html>

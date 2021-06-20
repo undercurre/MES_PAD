@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<script src="../js/qs.js"></script>
+		<!-- 引入vue -->
+		<script src="../js/vue.min.js"></script>
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../css/elementUi.min.css">
+		<!-- 引入组件库 -->
+		<script src="../js/elementUi.min.js"></script>
+		<script src="../js/mui.min.js"></script>
+		<link href="../css/mui.min.css" rel="stylesheet" />
+		<script src="../js/utils.js"></script>
+		<!-- 引入轻量处理时间和日期的js库 -->
+		<script src="../js/day.js"></script>
+		<link rel="stylesheet" type="text/css" href="../css/login.css"/>
+		<script type="text/javascript" charset="utf-8">
+			mui.init();
+		</script>
+		<script src="../js/fastclick.js"></script>
+		<script>
+			if('addEventListener' in document) {
+			     document.addEventListener('DOMContentLoaded',function() {
+			     FastClick.attach(document.body);
+			   },false);
+			}
+		</script>
+	</head>
+	<body>
+		<div id="app">
+			<div class="page-login">
+				<div class="page-login--layer page-login--layer-area">
+					<ul class="circles">
+						<li v-for="n in 10" :key="n"></li>
+					</ul>
+				</div>
+				<div class="page-background" flex="main:center cross:center">
+					
+				</div>
+				<!-- <div class="page-login--layer page-login--layer-time" flex="main:center cross:center">
+					{{time}}
+				</div> -->
+				<div class="page-login--layer" style="position: fixed;">
+					<div class="page-login--content" flex="dir:top main:justify cross:stretch box:justify">
+						<div class="page-login--content-header">
+							<p class="page-login--content-header-motto">
+								时间是一切财富中最宝贵的财富
+							</p>
+						</div>
+						<div class="page-login--content-main" flex="dir:top main:center cross:center">
+							<img class="page-login--logo" src="../images/all.png">
+							<div class="page-login--form">
+								<el-card shadow="never" class="login-form-card">
+									<el-form ref="loginForm" label-position="top" :rules="rules" :model="formLogin" size="default">
+										<el-form-item prop="xhost">
+											<el-input type="text" v-model="formLogin.xhost" placeholder="服务器">
+												<i slot="prefix" class="el-icon-s-platform"></i>
+											</el-input>
+										</el-form-item>
+										<el-form-item prop="username">
+											<el-input type="text" v-model="formLogin.username" placeholder="用户名">
+												<i slot="prefix" class="el-icon-user"></i>
+											</el-input>
+										</el-form-item>
+										<el-form-item prop="password">
+											<el-input type="password" v-model="formLogin.password" placeholder="密码">
+												<i slot="prefix" class="el-icon-unlock"></i>
+											</el-input>
+										</el-form-item>
+										<el-button size="default" @tap.native="submitForm" type="primary" class="button-login">
+											登录
+										</el-button>
+									</el-form>
+								</el-card>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script>
+			var App = new Vue({
+				el: '#app',
+				data: function() {
+					return {
+						timeInterval: null,
+						time: dayjs().format('HH:mm:ss'),
+						// 表单
+						formLogin: {
+							xhost: '',
+							username: '',
+							password: ''
+						}
+					}
+				},
+				mounted: function() {
+					var that = this
+					that.timeInterval = setInterval(function() {
+						that.refreshTime()
+					}, 1000)
+				},
+				beforeDestroy: function() {
+					clearInterval(this.timeInterval)
+				},
+				methods: {
+					refreshTime: function() {
+						this.time = dayjs().format('HH:mm:ss')
+					},
+					// 提交登录信息
+					submitForm: function () {
+						var that = this
+						this.$refs.loginForm.validate(function(valid) {
+							console.log('valid: ' + valid)
+							if (valid) {
+								window.localStorage.setItem('host', that.formLogin.xhost)
+								http({
+									url: 'Auth/GetToken',
+									method: 'post',
+									params: {
+										Password: that.formLogin.password,
+										UserName: that.formLogin.username
+									},
+									success: function (res) {
+										if (res.Result) {
+											tips('success')
+											mui.alert('登录成功', function () {
+												var webview = plus.webview.getLaunchWebview() // 回到首页
+												mui.fire(webview, 'refresh')
+												webview.show()
+											})
+											window.localStorage.setItem('Token', res.Result.Token)
+											window.localStorage.setItem('Userinfo', JSON.stringify(res.Result.Userinfo))
+											window.localStorage.setItem('loginInfo', JSON.stringify({
+												xhost: that.formLogin.xhost || '',
+												username: that.formLogin.username || '',
+												password: that.formLogin.password || ''
+											}))
+											
+										}
+									}
+								})
+							} else {
+								// 登录表单校验失败
+								that.$message.error(that.formValidateError)
+							}
+						})
+					}
+				},
+				created: function() {
+
+				},
+				computed: {
+					rules: function() {
+						return {
+							username: [{
+								required: true,
+								message: '请输入用户名',
+								trigger: 'blur'
+							}],
+							password: [{
+								required: true,
+								message: '请输入密码',
+								trigger: 'blur'
+							}]
+						}
+					},
+					formValidateError: function() {
+						return '表单校验失败，请检查'
+					}
+				}
+			})
+			mui.plusReady(function () {
+			   var loginInfo = window.localStorage.getItem('loginInfo') || '{}'
+				 loginInfo = JSON.parse(loginInfo) || {}
+				 App.formLogin.xhost = loginInfo.xhost || '';
+				 App.formLogin.username = loginInfo.username || '';
+				 App.formLogin.password = loginInfo.password || '';
+			})
+		</script>
+	</body>
+</html>

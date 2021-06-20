@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<script src="../../js/qs.js"></script>
+		<!-- 引入vue -->
+		<script src="../../js/vue.min.js"></script>
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../../css/elementUi.min.css">
+		<link rel="stylesheet" href="../../css/vant.min.css" />
+		<script src="../../js/common.js"></script>
+		<!-- 引入组件库 -->
+		<script src="../../js/elementUi.min.js"></script>
+		<script src="../../js/vant.min.js"></script>
+		<script src="../../js/mui.min.js"></script>
+		<link href="../../css/mui.min.css" rel="stylesheet" />
+		<script src="../../js/utils.js"></script>
+		<link rel="stylesheet" href="../../css/MesProductionPreMst.css">
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../../css/vxe-table-2.9.5.min.css">
+		<!-- 引入脚本 -->
+		<script src="../../js/xe-utils.min.js"></script>
+		<script src="../../js/vxe-table-2.9.5.min.js"></script>
+		<script src="../../js/es5-shim.min.js"></script>
+		<script src="../../js/promise-6.1.0.js"></script>
+		<script src="../../js/fastclick.js"></script>
+		<script>
+			if('addEventListener' in document) {
+			     document.addEventListener('DOMContentLoaded',function() {
+			     FastClick.attach(document.body);
+			   },false);
+			}
+		</script>
+	</head>
+	<body>
+		<div class="page" id="app">
+			<div class="custom-container-full" style="display: flex;flex-flow: column;">
+				<div class="custom-container-full__header" ref="header">
+					<div>
+						<div class="custom-container-header">
+							<div class="transform-cx">
+								<div class="cch-block">
+									<el-page-header @back="goBack" content="新增设备点检"></el-page-header>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="custom-container-full__body" ref="body" style="flex: 1;">
+					<div class="block-one">
+						<el-form ref="form" :model="form" label-width="100px" :show-message="false" size="mini">
+							<el-row>
+								<el-col span="12">
+									<el-form-item label="出产编号" prop="PRODUCT_NO">
+										<div style="display: flex;align-items: center;">
+											<el-input v-model="form.PRODUCT_NO" :disabled="disabled" class="select" @keyup.native.enter="changeCODE"
+											 style="width: 100%"></el-input>
+											<div @tap="openBarcode">
+												<img src="../../images/saoma.png" alt="saoma" class="saoma-icon">
+											</div>
+										</div>
+									</el-form-item>
+								</el-col>
+								<el-col span="12">
+									<el-form-item label="存放地点" prop="STATION_ID">
+										<el-input v-model="form.LINE_NAME" readonly clickable clearable @click.native="showLineName=true"></el-input>
+										<van-popup v-model="showLineName" round position="bottom">
+											<van-picker :default-index="defaultLineIndex" show-toolbar :columns="LinesList" value-key="LINE_NAME" title="存放地点" item-height="40"
+											 visible-item-count="10" @cancel="showLineName = false" @confirm="dealLineName" />
+										</van-popup>
+									</el-form-item>
+								</el-col>
+							</el-row>
+							<el-row>
+								<el-col span="12">
+									<el-form-item label="设备" prop="EQUIP_ID">
+										<el-input v-model="form.EQUIP_NAME" readonly clickable clearable @click.native="showEQUIP_NAME=true"></el-input>
+										<van-popup v-model="showEQUIP_NAME" round position="bottom">
+											<van-picker :default-index="defaultEquipIndex" show-toolbar :columns="EquipmentList" value-key="NAME" title="设备" item-height="40"
+											 visible-item-count="10" @cancel="showEQUIP_NAME = false" @confirm="equip_but" />
+										</van-popup>
+									</el-form-item>
+								</el-col>
+								<el-col span="12">
+									<el-form-item label="保养类型" prop="KEEP_TYPE">
+										<el-input v-model="form.KEEP_NAME" readonly clickable clearable @click.native="showKEEP_TYPE=true"></el-input>
+										<van-popup v-model="showKEEP_TYPE" round position="bottom">
+											<van-picker show-toolbar :columns="KeepTypeList" value-key="label" title="保养类型" item-height="40"
+											 visible-item-count="10" @cancel="showKEEP_TYPE = false" @confirm="dealKEEP_TYPE" />
+										</van-popup>
+									</el-form-item>
+								</el-col>
+							</el-row>
+							<el-row>
+								<el-col span="12">
+									<el-form-item label="设备状态" prop="EQUIP_STATUS">
+										<el-input v-model="form.EQUIP_STATUSNAME" clickable clearable @click.native="showEQUIP_STATUS=true"></el-input>
+										<van-popup v-model="showEQUIP_STATUS" round position="bottom">
+											<van-picker show-toolbar :columns="EquipStatusList" value-key="Text" title="设备状态" item-height="40"
+											 visible-item-count="10" @cancel="showEQUIP_STATUS = false" @confirm="dealEQUIP_STATUS" />
+										</van-popup>
+									</el-form-item>
+								</el-col>
+								<el-col span="12">
+								</el-col>
+							</el-row>
+						</el-form>
+					</div>
+					<el-card class="box-card" style="flex: 1;background-color: #d2d2d2;">
+						<div slot="header" class="clearfix">
+							<span>内容明细</span>
+						</div>
+						<div style="padding: 5px;width: 100%;height: 100%;">
+							<el-card v-for="(dataItem,index) in mainTable" :key="dataItem.ID" :style="{
+								marginBottom: index < mainTable.length -1 ? '10px':0
+							}">
+								<div style="display: flex;">
+									<div style="width: 40px;border-right: #ebeef5 1px solid;display: flex;align-items: center;justify-content: center;">
+										{{index + 1}}
+									</div>
+									<div style="flex: 1;padding-left: 10px;">
+										<el-form label-width="80px" size="small">
+											<el-form-item label="保养内容事项">
+												<el-input v-model="dataItem.KEEP_CONTENT" placeholder="请输入保养内容事项"></el-input>
+											</el-form-item>
+											<el-form-item label="保养工具辅料">
+												<el-input v-model="dataItem.KEEP_TOOLS" placeholder="请输入保养工具辅料"></el-input>
+											</el-form-item>
+											<el-form-item label="点检结果">
+												<el-switch v-model="dataItem.STATUS" active-color="#67C23A" inactive-color="#F56C6C" active-value="Y"
+												 inactive-value="N" :active-text="dataItem.STATUS === 'Y' ? '合格' : '不合格'">
+												</el-switch>
+											</el-form-item>
+											<el-form-item label="描述">
+												<el-input type="textarea" :rows="2" v-model="dataItem.MESSAGE" placeholder="请输入描述"></el-input>
+											</el-form-item>
+										</el-form>
+									</div>
+								</div>
+							</el-card>
+						</div>
+					</el-card>
+					<div :style="{
+										      height: tableHeight
+										    }">
+						<vxe-table ref="xTable" border resizable auto-resize keep-source size="medium" align="center" highlight-hover-row
+						 width="100%" height="100%" :data="tableData" :edit-rules="validRules" :mouse-config="{selected: true}"
+						 :edit-config="{trigger: 'click', mode: 'cell'}" :radio-config="{labelField: 'name', trigger: 'row'}"
+						 :checkbox-config="{checkField: 'checked', trigger: 'row'}">
+							<vxe-table-column show-overflow field="ORDER_NO" title="排序" width="70"></vxe-table-column>
+							<vxe-table-column show-overflow field="KEEP_CONTENT" title="保养内容事项" min-width="300"></vxe-table-column>
+							<vxe-table-column show-overflow field="KEEP_TOOLS" title="保养工具辅料" min-width="200"></vxe-table-column>
+							<vxe-table-column show-overflow field="STATUS" title="点检结果" width="220" :edit-render="{autofocus: '.custom-input', type: 'visible'}">
+								<template v-slot:edit="scoped">
+									<template v-if="scoped.row.BLLSTATUS==4">
+										<div>
+											<vxe-radio v-model="scoped.row.STATUS" label="1">合格</vxe-radio>
+											<vxe-radio v-model="scoped.row.STATUS" label="0" style="margin-top:5px;">不合格</vxe-radio>
+										</div>
+									</template>
+									<template v-else>
+										<div v-if="scoped.row.STATUS==1">合格</div>
+										<div v-else-if="scoped.row.STATUS==0">不合格</div>
+									</template>
+								</template>
+								<template v-slot="scoped">
+									<div v-if="scoped.row.STATUS==1">合格</div>
+									<div v-else-if="scoped.row.STATUS==0">不合格</div>
+								</template>
+							</vxe-table-column>
+							<vxe-table-column show-overflow title="查看" width="120">
+								<template v-slot="scoped">
+									<template>
+										<vxe-button @tap.native="lookRowEvent(scoped.row)">作业图</vxe-button>
+									</template>
+								</template>
+							</vxe-table-column>
+							<vxe-table-column show-overflow field="MESSAGE" title="描述" width="218" :edit-render="{autofocus: '.custom-input', type: 'visible'}">
+								<template v-slot:edit="scoped">
+									<template v-if="scoped.row.BLLSTATUS==4">
+										<template>
+											<textarea v-model="scoped.row.MESSAGE" placeholder></textarea>
+										</template>
+										<template v-else>
+											<div>{{ scoped.row.MESSAGE }}</div>
+										</template>
+									</template>
+									<template v-slot="scoped">{{ scoped.row.MESSAGE }}</template>
+								</template>
+							</vxe-table-column>
+						</vxe-table>
+					</div>
+				</div>
+				<div style="display: flex;" class="order-bottom-cell-button">
+					<el-button v-if="form.KEEP_CHECK_STATUS == 4" type="primary" icon="el-icon-circle-check" @tap.native="save_but">保存</el-button>
+					<el-button v-if="form.KEEP_CHECK_STATUS == 4" type="warning" icon="el-icon-circle-check" @tap.native="check_but">开始点检</el-button>
+					<el-button v-if="form.KEEP_CHECK_STATUS == 4" type="success" icon="el-icon-circle-check" @tap.native="SubmitReview_but">提交审核</el-button>
+				</div>
+			</div>
+		</div>
+		<script>
+			mui.init({
+
+			});
+		</script>
+		<script>
+			function getToday() {
+				var date = new Date()
+				var seperator1 = '-'
+				var year = date.getFullYear()
+				var month = date.getMonth() + 1
+				var strDate = date.getDate()
+				if (month >= 1 && month <= 9) {
+					month = '0' + month
+				}
+				if (strDate >= 0 && strDate <= 9) {
+					strDate = '0' + strDate
+				}
+				var currentdate = year + seperator1 + month + seperator1 + strDate
+				return currentdate
+			}
+			var app = new Vue({
+				el: '#app',
+				data: {
+					ID: '',
+					KEEP_CHECK_STATUS: '',
+					form: {
+						ID: '',
+						PRODUCT_NO: '',
+						STATION_ID: '',
+						EQUIP_STATUS: '',
+						EQUIP_ID: '',
+						KEEP_TYPE: 0,
+						KEEP_TIME: getToday(),
+
+						KEEP_CHECK_STATUS: 4,
+						KEEP_USER: '',
+
+						insertRecords: [],
+						updateRecords: []
+					},
+					EquipmentList: [],
+					KeepTypeList: [{
+						KEEP_TYPE: 0,
+						label: '日保养',
+						Value: 0
+					}, {
+						KEEP_TYPE: 3,
+						label: '周保养',
+						Value: 3
+					}, {
+						KEEP_TYPE: 1,
+						label: '月保养',
+						Value: 1
+					}, {
+						KEEP_TYPE: 4,
+						label: '季度保养',
+						Value: 4
+					}, {
+						KEEP_TYPE: 2,
+						label: '年保养',
+						Value: 2
+					}],
+					LinesList: [],
+					EquipStatusList: [],
+					LinesArr: [],
+					EquipmentArr: [],
+
+					tableData: [],
+					validRules: {
+						STATUS: [{
+							required: true,
+							message: '点检结果必选'
+						}]
+					},
+					centerDialogVisible: false,
+					img_url: 'http://47.107.170.153:58778',
+					workImg: [],
+					ConfigData: {
+						equip_id: '',
+						keep_type: ''
+					},
+					EquStatusVal: 0,
+					keepConfigData: [],
+					disabled: false,
+					deviceStatus: false,
+					checkStatus: false,
+					saveID: -1, // 判断是否保存
+					ReviewVal: {
+						ID: '',
+						Operator: ''
+					},
+					tableHeight: '200px',
+					showLineName: false,
+					showEQUIP_NAME: false,
+					showKEEP_TYPE: false,
+					showEQUIP_STATUS: false,
+					mainTable: [],
+					defaultEquipIndex: 0,
+					defaultLineIndex: 0
+				},
+				computed: {
+					userinfo: function() {
+						var userinfo = window.localStorage.getItem('Userinfo')
+						userinfo = userinfo ? JSON.parse(userinfo) : {};
+						return userinfo
+					}
+				},
+				methods: {
+					dealLineName: function(e) {
+						this.form.LINE_NAME = e.LINE_NAME
+						this.form.STATION_ID = e.ID
+						this.showLineName = false
+					},
+					dealEQUIP: function(e) {
+						this.form.EQUIP_NAME = e.NAME
+						this.form.EQUIP_ID = e.ID
+						this.showEQUIP_NAME = false
+					},
+					dealKEEP_TYPE: function(e) {
+						console.log(JSON.stringify(e))
+						this.form.KEEP_NAME = e.label
+						this.form.KEEP_TYPE = e.Value
+						this.showKEEP_TYPE = false
+					},
+					dealEQUIP_STATUS: function(e) {
+						this.form.EQUIP_STATUSNAME = e.Text
+						this.form.EQUIP_STATUS = e.Value
+						this.showEQUIP_STATUS = false
+					},
+					openBarcode: function() {
+						createWithoutTitle('/pages/barcode_scan.html', {
+							titleNView: {
+								type: 'float',
+								backgroundColor: 'rgb(34, 34, 34)',
+								titleText: '扫一扫',
+								titleColor: '#FFFFFF',
+								autoBackButton: true
+							}
+						});
+					},
+					computedHeight: function() {
+						var that = this
+						window.addEventListener('resize', function() {
+							that.computedHeight()
+						})
+						that.$nextTick(function() {
+							var formHeight = that.$refs.form.$el.offsetHeight
+							var windowHeight = document.body.clientHeight || document.documentElement.clientHeight
+							that.tableHeight = (windowHeight - 58 - formHeight - 20) + 'px'
+						})
+					},
+					// 获取表格
+					getLoadDtlData: function(isPullFresh) {
+						var that = this
+						http({
+							url: 'SfcsEquipKeep/LoadDtlData?m_id=' + that.ID,
+							method: 'get',
+							params: {
+								// m_id: that.ID
+							},
+							success: function(res) {
+								console.log(JSON.stringify(res))
+								if (isPullFresh) {
+									mui('#app').pullRefresh().endPulldown()
+								}
+								var data = JSON.parse(res.Result || [])
+								that.tableData = data
+								that.$nextTick(function() {
+									if (that.tableData.length > 0) {
+										that.disabled = true
+										that.checkStatus = true
+									} else {
+										that.disabled = false
+									}
+								})
+							},
+							error: function() {
+								if (isPullFresh) {
+									mui('#app').pullRefresh().endPulldown()
+								}
+							}
+						})
+					},
+					// 获取点检配置列表
+					GetConfigData: function() {
+						var that = this
+						http({
+							url: 'SfcsEquipKeep/GetKeepConfigData',
+							method: 'get',
+							params: that.ConfigData,
+							success: function(res) {
+								if (res.Result) {
+									var data = JSON.parse(res.Result || [])
+									that.keepConfigData = data
+									if (that.keepConfigData.length === 0) {
+										plus.nativeUI.toast('暂无数据，请到设备点检事项录入')
+										tips('error')
+									}
+								}
+							}
+						})
+					},
+					// 获取设备状态
+					GetEquStatusList: function(val) {
+						var that = this
+						http({
+							url: 'SfcsEquipKeep/GetEquipmentStatus',
+							method: 'get',
+							params: {
+								equip_id: val || that.ID
+							},
+							success: function(res) {
+								that.EquStatusVal = JSON.parse(res.Result || [])
+							}
+						})
+					},
+					// 出产编号过滤
+					changeCODE: function() {
+						var e = this.form.PRODUCT_NO
+						var Eqi = this.EquipmentArr
+						for (var i = 0; i < Eqi.length; i++) {
+							if (Eqi[i].PRODUCT_NO == e) {
+								this.EquipmentList = this.EquipmentArr
+								this.LinesList = this.LinesArr
+								this.form.STATION_ID = Eqi[i].STATION_ID
+								this.form.EQUIP_ID = Eqi[i].ID
+								this.form.EQUIP_NAME = Eqi[i].NAME
+								for (var j = 0; j < this.LinesList.length; j++) {
+									if (this.LinesList[j].ID === Eqi[i].STATION_ID) {
+										this.form.LINE_NAME = this.LinesList[j].LINE_NAME
+										this.defaultLineIndex = j
+										break
+									} else {
+										this.defaultLineIndex = 0
+										this.form.LINE_NAME = ''
+									}
+								}
+								break
+							} else {
+								this.form.STATION_ID = ''
+								this.form.EQUIP_ID = ''
+							}
+						}
+						var ret2 = -1
+						for (var i = 0; i < Eqi.length; i++) {
+							if (Eqi[i].PRODUCT_NO == e) {
+								ret2 = i
+							}
+						}
+						console.log(JSON.stringify(e))
+
+						if (ret2 === -1) {
+							this.form.PRODUCT_NO = ''
+							this.form.LINE_NAME = ''
+							this.form.EQUIP_NAME = ''
+							this.form.KEEP_NAME = ''
+							this.form.EQUIP_STATUSNAME = ''
+							plus.nativeUI.toast('没有找到设备')
+							tips('error')
+						} else {
+							this.tableData = []
+							this.defaultEquipIndex = ret2
+						}
+					},
+					// 线别过滤
+					statios_but: function(val) {
+						var that = this
+						that.EquipmentList = []
+						that.EquipmentArr.forEach(function(v) {
+							if (val !== v.STATION_ID) {
+								if (that.EquipmentList.length === 0) {
+									that.form.EQUIP_ID = ''
+								}
+							} else {
+								that.EquipmentList.push(v)
+							}
+						})
+					},
+					// 设备过滤
+					equip_but: function(val) {
+						var that = this
+						// console.log(JSON.stringify(val))
+						console.log(that.form.STATION_ID)
+						this.EquipmentList.forEach(function(v) {
+							if (v.ID === val.ID) {
+								that.form.EQUIP_ID = v.ID
+								that.form.PRODUCT_NO = v.PRODUCT_NO //出产编号
+								that.form.STATION_ID = v.STATION_ID //存放地点id
+								that.form.EQUIP_NAME = v.NAME //设备
+							}
+						})
+						console.log(that.form.STATION_ID)
+						this.LinesList.map(function(item) {
+							console.log('---- ' + item.ID)
+							if (that.form.STATION_ID === item.ID) {
+								that.form.LINE_NAME = item.LINE_NAME ? item.LINE_NAME.toString() : '' //存放地点
+							}
+						})
+						this.showEQUIP_NAME = false
+						this.tableData = []
+					},
+					//  添加或修改视图
+					getAddOrModify: function(val) {
+						var that = this
+						http({
+							url: 'SfcsEquipKeep/AddOrModify',
+							params: {
+								id: val
+							},
+							method: 'get',
+							success: function(res) {
+								if (res.Result) {
+									var data = res.Result
+									that.form.ID = data.KeepHead.ID
+									that.saveID = data.KeepHead.ID
+									that.ReviewVal.ID = data.KeepHead.ID
+									if (data.KeepHead.ID !== 0) {
+										
+										that.form.KEEP_CHECK_STATUS = data.KeepHead.KEEP_CHECK_STATUS
+										that.form.PRODUCT_NO = data.KeepHead.PRODUCT_NO
+										that.form.STATION_ID = data.KeepHead.STATION_ID
+										that.form.EQUIP_ID = data.KeepHead.EQUIP_ID
+										that.form.EQUIP_STATUS = data.KeepHead.EQUIP_STATUS.toString()
+										that.form.KEEP_TYPE = data.KeepHead.KEEP_TYPE.toString()
+										that.form.KEEP_TIME = data.KeepHead.KEEP_TIME
+										if (that.form.KEEP_CHECK_STATUS !== 4) {
+											that.deviceStatus = true
+										}
+										if (!data.KeepHead.KEEP_USER) {
+											that.form.KEEP_USER = that.userinfo.USER_NAME
+										}
+									}
+									that.LinesList = data.LinesList
+									that.LinesArr = data.LinesList
+									that.EquipmentList = data.EquipmentList
+									that.EquipmentArr = data.EquipmentList
+									// that.KeepTypeList = data.KeepTypeList
+									that.EquipStatusList = data.EquipStatusList
+									that.LinesList.map(item => {
+										if (item.ID === that.form.STATION_ID) {
+											that.form.LINE_NAME = item.LINE_NAME
+										}
+									})
+									that.EquipmentList.map(item => {
+										if (item.ID === that.form.EQUIP_ID) {
+											that.form.EQUIP_NAME = item.NAME
+										}
+									})
+									that.KeepTypeList.map(item => {
+										if (item.Value == that.form.KEEP_TYPE) {
+											that.form.KEEP_NAME = item.label
+										}
+									})
+									that.EquipStatusList.map(item => {
+										if (item.Value === that.form.EQUIP_STATUS) {
+											that.form.EQUIP_STATUSNAME = item.Text
+										}
+									})
+								}
+							}
+						})
+					},
+					lookRowEvent: function(row) {
+						var that = this
+						that.centerDialogVisible = true
+						http({
+							url: 'SfcsEquipKeep/LoadSOPData',
+							params: {
+								id: row.KEEP_CONTENT_ID
+							},
+							method: 'get',
+							success: function(res) {
+								if (res.Result) {
+									that.workImg = JSON.parse(res.Result || [])
+									var imgs = []
+									that.workImg.forEach(function(item) {
+										imgs.push(that.img_url + item.RESOURCE_URL)
+									})
+									plus.nativeUI.previewImage(imgs)
+								}
+							}
+						})
+					},
+					// 保存
+					save_but: function() {
+						if (this.form.PRODUCT_NO === '') {
+							plus.nativeUI.toast('请输入出产编号')
+							tips('error')
+							return false
+						}
+						if (this.form.STATION_ID === '') {
+							plus.nativeUI.toast('请选择存放地点')
+							tips('error')
+							return false
+						}
+						if (this.form.EQUIP_ID === '') {
+							plus.nativeUI.toast('请选择设备')
+							tips('error')
+							return false
+						}
+						if (this.form.KEEP_TYPE === '') {
+							plus.nativeUI.toast('请选择保养类型')
+							tips('error')
+							return false
+						}
+						if (this.form.EQUIP_STATUS === '') {
+							plus.nativeUI.toast('请选择设备状态')
+							tips('error')
+							return false
+						}
+						if (this.form.KEEP_TIME === '') {
+							plus.nativeUI.toast('请选择点检日期')
+							tips('error')
+							return
+						}
+						// this.updateData()
+						var postdata = this.$refs.xTable.getTableData() || {}
+						postdata = postdata.fullData || []
+						if (!postdata.length) {
+							plus.nativeUI.toast('缺少检验项')
+							tips('error')
+							return false
+						}
+						var that = this
+						if (this.form.ID) {
+							this.form.updateRecords = postdata
+						} else {
+							this.form.insertRecords = postdata
+						}
+						this.$refs.xTable.validate(function(valid) {
+							if (!valid) {
+								that.updateData()
+							}
+						})
+					},
+					updateData: function() {
+						var that = this
+						http({
+							url: 'SfcsEquipKeep/SaveData',
+							params: that.form,
+							method: 'post',
+							success: function(res) {
+								if (res.Result) {
+									that.saveID = res.Result
+									that.ID = res.Result
+									that.getAddOrModify(res.Result)
+									that.getLoadDtlData()
+									plus.nativeUI.alert('保存成功', function() {
+
+									}, '成功')
+									tips('success')
+								} else {
+									plus.nativeUI.alert('保存失败', function() {
+
+									}, '失败')
+									tips('error')
+								}
+							}
+						})
+					},
+					// 开始点检
+					check_but: function() {
+						// 表格有值不能点击
+						// if (this.checkStatus) {
+						// 	return false
+						// }
+						if (this.form.EQUIP_ID === '') {
+							plus.nativeUI.toast('请选择设备')
+							tips('error')
+							return false
+						}
+						if (this.form.KEEP_TYPE === '') {
+							plus.nativeUI.toast('请选择保养类型')
+							tips('error')
+							return false
+						}
+						this.ConfigData.equip_id = this.form.EQUIP_ID
+						this.ConfigData.keep_type = this.form.KEEP_TYPE
+						this.GetEquStatusList(this.form.EQUIP_ID)
+						console.log('====你好')
+						this.GetConfigData()
+						console.log('buhao')
+						var that = this
+						var array = []
+						var timer = setTimeout(function() {
+							if (that.EquStatusVal !== 0 && that.EquStatusVal !== 1) {
+								plus.nativeUI.toast('当前设备状态不能开始点检')
+								tips('error')
+								return false
+							}
+							that.keepConfigData.forEach(function(item) {
+								var record = {
+									ID: 0,
+									ORDER_NO: item.ORDER_NO,
+									// KEEP_HEAD_ID: m_id,
+									KEEP_CONTENT_ID: item.ID,
+									KEEP_CONTENT: item.KEEP_CONTENT,
+									KEEP_TOOLS: item.KEEP_TOOLS,
+									BLLSTATUS: 4,
+									STATUS: null,
+									MESSAGE: null
+								}
+								// 从最后插入
+								array.push(record)
+								// that.$refs.xTable.insertAt(record, -1)
+							})
+							that.tableData = array
+							if (that.keepConfigData.length > 0) {
+								that.checkStatus = true
+							}
+							clearTimeout(timer)
+						}, 200)
+					},
+					// 提交审核
+					SubmitReview_but: function() {
+						var that = this
+						if (this.saveID <= 0) {
+							plus.nativeUI.toast('请先保存数据')
+							tips('error')
+							return false
+						}
+						var insertRecords = this.$refs.xTable.getInsertRecords()
+						if (this.tableData.length === 0) {
+							plus.nativeUI.toast('请先进行点检')
+							tips('error')
+							return false
+						}
+						plus.nativeUI.confirm('您确定要提交审核吗？', function(e) {
+							if (e.index === 0) {
+								http({
+									url: 'SfcsEquipKeep/PostToCheck',
+									method: 'post',
+									params: that.ReviewVal,
+									success: function(res) {
+										if (res.Result) {
+											plus.nativeUI.alert('提交成功', function() {
+
+											}, '成功')
+											tips('success')
+											that.goBack()
+										} else {
+											plus.nativeUI.alert('提交失败', function() {
+
+											}, '失败')
+											tips('error')
+										}
+									}
+								})
+							}
+						}, "确认", ["确定", "取消"])
+					},
+					goBack: function() {
+						var webview = plus.webview.getWebviewById('SfcsEquipKeep')
+						var currentWebview = plus.webview.currentWebview()
+						currentWebview.close()
+						mui.fire(webview, 'refresh')
+						mui.back()
+					},
+				},
+				created: function() {
+					this.ReviewVal.Operator = this.userinfo.USER_NAME
+					this.form.KEEP_USER = this.userinfo.USER_NAME
+				}
+			})
+
+			mui.plusReady(function() {
+				var _selfWebview = plus.webview.currentWebview()
+				app.computedHeight()
+				app.ID = _selfWebview.ID || 0
+				app.KEEP_CHECK_STATUS = _selfWebview.KEEP_CHECK_STATUS || ''
+				app.form.KEEP_CHECK_STATUS = _selfWebview.KEEP_CHECK_STATUS || ''
+
+				var host = window.localStorage.getItem('host')
+				var _BASE_PORT = ''
+				if (host.indexOf(':') === -1) {
+					_BASE_PORT = BASE_PORT
+				}
+				var BASE_URL = 'http://' + host + _BASE_PORT
+
+				app.img_url = BASE_URL
+				if (app.ID) {
+					app.getLoadDtlData()
+				}
+				
+				app.getAddOrModify(app.ID)
+			})
+			document.addEventListener('refresh', function(e) {
+				app.computedHeight()
+				app.ID = e.detail.ID || 0
+				app.KEEP_CHECK_STATUS = e.detail.KEEP_CHECK_STATUS || ''
+				app.form.KEEP_CHECK_STATUS = e.detail.KEEP_CHECK_STATUS || ''
+				if (app.ID) {
+					app.getLoadDtlData()
+				}
+				
+				app.getAddOrModify(app.ID)
+			})
+
+			// 扫码回调
+			function scaned(t, r, f) {
+				app.$set(app.form, 'PRODUCT_NO', r)
+				app.changeCODE()
+			}
+		</script>
+	</body>
+</html>

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<script src="js/qs.js"></script>
+		<!-- 引入vue -->
+		<script src="js/vue.min.js"></script>
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="css/elementUi.min.css">
+		<link rel="stylesheet" href="css/vant.min.css" />
+		<!-- 引入组件库 -->
+		<script src="js/elementUi.min.js"></script>
+		<script src="js/vant.min.js"></script>
+		<script src="js/mui.min.js"></script>
+		<link href="css/mui.min.css" rel="stylesheet" />
+		<script src="js/utils.js"></script>
+		<script src="js/jquery.1.12.4.min.js"></script>
+		<script src="js/constellation.js"></script>
+		<link rel="stylesheet" type="text/css" href="js/crowd.css" />
+		<link rel="stylesheet" href="css/index.css">
+		<script type="text/javascript" charset="utf-8">
+			mui.init({
+				
+			});
+		</script>
+		<script src="js/fastclick.js"></script>
+		<script>
+			if ('addEventListener' in document) {
+				document.addEventListener('DOMContentLoaded', function() {
+					FastClick.attach(document.body);
+				}, false);
+			}
+		</script>
+	</head>
+	<body>
+		<div id="app" class="page">
+			<div class="nav">
+				<div class="logo">
+					<img src="images/all.png" alt="">
+				</div>
+				<div class="header-right">
+					<el-button icon="el-icon-user-solid" class="inlet" @click="toUserInfo">
+
+					</el-button>
+				</div>
+			</div>
+			<div class="content">
+				<van-grid id="menu-grid" :border="false" column-num="3" gutter="15">
+					<van-grid-item v-for="menu in menus" :key="menu.name" @click="menu.handler" v-if="menu.isShow">
+						<div class="menu-item">
+							<div class="menu-item-wrapper">
+								<div class="menu-icon-wrapper"><img :src="`images/${menu.icon}.png`" /></div>
+								<div class="menu-title-wrapper inlet" :title="menu.title">{{menu.title}}</div>
+							</div>
+						</div>
+					</van-grid-item>
+				</van-grid>
+			</div>
+			<van-popup v-model="showUpdate" :close-on-click-overlay="false" lazy-render :closeable="true" style="width: 70%;">
+				<div style="background: #fff;padding: 20px;margin-top: 20px;">
+					<div class="current-version" style="font-size: 20px;font-weight: bold;text-align: center;margin-bottom: 15px;">最新版本： V{{updateInfo.Version}}</div>
+					<ul class="current-update-content">
+						<li v-for="(item,index) in updateInfo.Note" :key="index" style="margin-bottom: 5px;">{{item}}</li>
+					</ul>
+					
+					<el-button type="primary" style="width: 100%;margin-top: 30px;" class="update-now" @click.stop="updateNow">立即更新</el-button>
+					<div class="update-line"></div>
+				</div>
+				
+			</van-popup>
+		</div>
+		<script>
+			var App = new Vue({
+				el: '#app',
+				data: function() {
+					return {
+						activeIndex: '/index.html',
+						Userinfo: {
+							USER_NAME: ''
+						},
+						menus: [
+							{
+								name:'NewChanQianQueRen',
+								icon:'confirm',
+								title:'新增产前确认',
+								handler:this.toNewChanQianQueRen
+							},
+							{
+								name: 'ChanQianQueRen',
+								icon: 'confirm',
+								title: '产前确认',
+								handler: this.toChanQianQueRen,
+								isShow: false
+							},
+							{
+								name:'NewShebeiDianjian',
+								icon:'dianjian',
+								title:'新增设备点检',
+								handler:this.toNewShebeiDianjian
+							},
+							{
+								name: 'ShebeiDianjian',
+								icon: 'dianjian',
+								title: '设备点检',
+								handler: this.toShebeiDianjian,
+								isShow: false
+							},
+							{
+								name:'XunjianZuoye',
+								icon:'xunjian',
+								title:'巡检作业',
+								handler:this.toXunjianZuoye,
+								isShow: false
+							},
+							{
+								name:'OQA',
+								icon:'worker',
+								title:'OQA',
+								handler:this.toOQA,
+								isShow: false
+							},
+							{
+								name:'MesQualityInfo',
+								icon:'system',
+								title:'首件检验',
+								handler:this.toMesQualityInfo,
+								isShow: false
+							}
+						],
+						showUpdate:false,
+						updateInfo:{
+							Note:'',
+							Title:'',
+							Version:''
+						}
+					}
+				},
+				computed: {
+					updateDetails(){
+						if(this.updateInfo.Note){
+							return this.updateInfo.Note.split(';br&gt;')
+							// .map(item =>{
+							// 	var pos = item.indexOf('.') + 1
+							// 	return item.substring(pos)
+							// })
+						}
+						return [
+							"暂无更新介绍"
+						]
+					}
+				},
+				methods: {
+					logOff: function() {
+						var that = this
+						plus.nativeUI.confirm('确定要退出登录吗？', function(e) {
+							if (e.index === 0) {
+								window.localStorage.setItem('Token', null)
+								window.localStorage.setItem('Userinfo', null)
+								tips('success')
+								var webview = plus.webview.getWebviewById('login')
+								if (webview) {
+									mui.fire(webview, 'refresh')
+									webview.show()
+								} else {
+									href('/pages/login.html', 'login')
+								}
+								plus.nativeUI.toast('退出登录成功')
+							}
+						}, "确认", ["确定", "取消"])
+					},
+					handleTapNav: function(index, id) {
+						href(index, id)
+					},
+					initData: function() {
+						var that = this
+						var Userinfo = window.localStorage.getItem('Userinfo') || '{}'
+						Userinfo = Userinfo ? JSON.parse(Userinfo) : {
+								USER_NAME: ''
+							};
+						
+						that.Userinfo = Userinfo || {}
+						http({
+							url: 'MesPadClientMenus/LoadDataByRoleId',
+							method: 'get',
+							params: {
+								roleId: that.Userinfo.ROLE_ID || 1
+							},
+							success: function(res) {
+								if (res.ErrorInfo.Status) {
+									plus.nativeUI.alert(res.ErrorInfo.Message || '初始化菜单权限失败')
+									tips('error')
+									return false
+								}
+								if (res.Result) {
+									var data = res.Result
+									for (var j = 0; j < that.menus.length; j++) {
+										var _item = that.menus[j]
+										for (var i = 0; i < data.length; i ++) {
+											var item = data[i]
+											if (_item.name === item.MENU_CODE) {
+												_item.isShow = true
+											}
+										}
+									}
+								}
+							},
+							error: function(xhr, type, errorThrown) {
+								console.log(type)
+								console.log(JSON.stringify(xhr))
+								console.log(errorThrown)
+							}
+						})
+					},
+					toNewChanQianQueRen: function() {
+						var webview = plus.webview.getWebviewById('ModifyMesMst')
+						if (webview) {
+							mui.fire(webview, 'refresh', {
+								ID: 0
+							})
+							webview.show()
+						} else {
+							href('/pages/ModifyMesMst/index.html', 'ModifyMesMst', {
+								ID: 0
+							})
+						}
+					},
+					// 产前确认
+					toChanQianQueRen: function() {
+						var webview = plus.webview.getWebviewById('MesProductionPreMst')
+						if (webview) {
+							mui.fire(webview, 'refresh')
+							webview.show()
+						} else {
+							href('/pages/MesProductionPreMst/index.html', 'MesProductionPreMst')
+						}
+					},
+					// 添加
+					toNewShebeiDianjian: function() {
+						var webview = plus.webview.getWebviewById('modifyEquipKeep')
+						if (webview) {
+							mui.fire(webview, 'refresh', {
+								ID: 0,
+								KEEP_CHECK_STATUS: 4
+							})
+							webview.show()
+						} else {
+							href('/pages/modifyEquipKeep/index.html', 'modifyEquipKeep', {
+								ID: 0,
+								KEEP_CHECK_STATUS: 4
+							})
+						}
+					},
+					// 设备点检 SfcsEquipKeep
+					toShebeiDianjian: function() {
+						var webview = plus.webview.getWebviewById('SfcsEquipKeep')
+						if (webview) {
+							mui.fire(webview, 'refresh')
+							webview.show()
+						} else {
+							href('/pages/SfcsEquipKeep/index.html', 'SfcsEquipKeep')
+						}
+					},
+					// 设备点检 SfcsEquipKeep
+					toOQA: function() {
+						var webview = plus.webview.getWebviewById('oqa')
+						if (webview) {
+							mui.fire(webview, 'refresh')
+							webview.show()
+						} else {
+							href('/pages/OQA/oqa.html', 'oqa')
+						}
+					},
+					// 首件检验 MesQualityInfo
+					toMesQualityInfo: function() {
+						var webview = plus.webview.getWebviewById('MesQualityInfo')
+						console.log(webview)
+						if (webview) {
+							mui.fire(webview, 'refresh')
+							webview.show()
+						} else {
+							href('/pages/MesQualityInfo/index.html', 'MesQualityInfo')
+						}
+					},
+					//跳转用户信息页面
+					toUserInfo:function(){
+						var that = this;
+						var webview = plus.webview.getWebviewById('user')
+						if (webview) {
+							mui.fire(webview, 'refresh')
+							webview.show()
+						} else {
+							href('/pages/user/index.html', 'user')
+						}
+					},
+					// 抽检作业
+					toChoujianZuoye: function() {
+						var webview = plus.webview.getWebviewById('MesSpotcheckHeader')
+						
+						if (webview) {
+							mui.fire(webview, 'refresh')
+							webview.show()
+						} else {
+							href('/pages/MesSpotcheckHeader/index.html', 'MesSpotcheckHeader')
+						}
+					},
+					// 巡检作业
+					toXunjianZuoye: function() {
+						var webview = plus.webview.getWebviewById('IpqaMst')
+						if (webview) {
+							mui.fire(webview, 'refresh')
+							webview.show()
+						} else {
+							href('/pages/IpqaMst/index.html', 'IpqaMst')
+						}
+					},
+					exitSystem: function() {
+						plus.nativeUI.confirm('确定要退出系统吗？', function(e) {
+							if (e.index === 0) {
+								plus.runtime.quit()
+							}
+						}, "确认", ["确定", "取消"])
+					},
+					// 检查更新
+					checkUpdate: function() {
+
+					},
+					dealOperation: function(action, index) {
+						action.handler.call(this)
+					},
+					updateNow: function() {
+						createTask('download-app')
+					},
+					cancelUpdate:function(){
+						this.showUpdate = false
+					}
+				},
+				created: function() {
+
+				}
+			})
+			mui.plusReady(function() {
+				checkUpdater(App)
+				App.initData()
+				
+			})
+			window.addEventListener('refresh', function(e) {
+				checkUpdater(App)
+				App.initData()
+			})
+			// 监听后台运行
+			document.addEventListener('pause', function() {
+				console.log('后台运行...');
+			});
+
+			// 监听前台运行
+			document.addEventListener('resume', function() {
+				console.log('前台运行...');
+			});
+		</script>
+	</body>
+</html>

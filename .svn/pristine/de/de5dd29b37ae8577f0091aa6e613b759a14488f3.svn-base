@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<script src="../../js/qs.js"></script>
+		<!-- 引入vue -->
+		<script src="../../js/vue.min.js"></script>
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../../css/elementUi.min.css">
+		<link rel="stylesheet" href="../../css/vant.min.css" />
+		<!-- 引入组件库 -->
+		<script src="../../js/elementUi.min.js"></script>
+		<script src="../../js/vant.min.js"></script>
+		<script src="../../js/mui.min.js"></script>
+		<link href="../../css/mui.min.css" rel="stylesheet" />
+		<script src="../../js/utils.js"></script>
+		<!-- 引入轻量处理时间和日期的js库 -->
+		<script src="../../js/day.js"></script>
+		<link rel="stylesheet" type="text/css" href="../../css/user.css" />
+		<script type="text/javascript" charset="utf-8">
+			mui.init();
+		</script>
+		<script src="../../js/fastclick.js"></script>
+		<script>
+			if ('addEventListener' in document) {
+				document.addEventListener('DOMContentLoaded', function() {
+					FastClick.attach(document.body);
+				}, false);
+			}
+		</script>
+	</head>
+	<body>
+		<div id="app">
+			<el-page-header class="page-header" @back="goBack" content="个人中心"></el-page-header>
+			<div id="page">
+				<div class="top">
+					<img class="picture-area" src="../../images/user.jpg" />
+				</div>
+				<div class="bottom">
+					<div class="user-photo"><img src="../../images/avatar.jpg" /></div>
+					<div class="user-name">你好，{{userinfo.USER_NAME || '---'}}</div>
+					<div class="user-op">
+						<div :class="{'k-state-actived': mode === 'self'}" @click="mode='self'">个人设置</div>
+						<div class="user-op-separator"></div>
+						<div :class="{'k-state-actived': mode === 'system'}" @click="mode='system'">系统设置</div>
+					</div>
+					<div class="left">
+						<van-cell-group>
+							<template v-if="mode==='self'">
+								<van-cell title="退出登录" is-link @click="logOff" />
+							</template>
+							<template v-else>
+								<van-cell title="退出程序" is-link @click="exitSystem" />
+							</template>
+						</van-cell-group>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript" charset="utf-8">
+			mui.init({});
+		</script>
+		<script>
+			var vm = new Vue({
+				el: '#app',
+				data: function() {
+					return {
+						mode: 'self',
+						userinfo: {}
+					}
+				},
+				mounted: function() {
+
+				},
+				beforeDestroy: function() {
+
+				},
+				methods: {
+					goBack: function() {
+						var webview = plus.webview.getWebviewById('user')
+						mui.fire(webview, 'refresh')
+						mui.back()
+					},
+					logOff: function() {
+						var that = this
+						plus.nativeUI.confirm('确定要退出登录吗？', function(e) {
+							if (e.index === 0) {
+								window.localStorage.setItem('Token', null)
+								window.localStorage.setItem('Userinfo', null)
+								tips('success')
+								var webview = plus.webview.getWebviewById('login')
+								if (webview) {
+									mui.fire(webview, 'refresh')
+									webview.show()
+								} else {
+									href('/pages/login.html', 'login')
+								}
+								plus.nativeUI.toast('退出登录成功')
+							}
+						}, "确认", ["确定", "取消"])
+					},
+					exitSystem: function() {
+						plus.nativeUI.confirm('确定要退出系统吗？', function(e) {
+							if (e.index === 0) {
+								plus.runtime.quit()
+							}
+						}, "确认", ["确定", "取消"])
+					}
+				},
+				created: function() {
+
+				}
+			})
+			mui.plusReady(function () {
+			   var userinfo = window.localStorage.getItem('Userinfo') || '{}'
+			   userinfo = userinfo ? (JSON.parse(userinfo) || {}) : {};
+				 vm.userinfo = userinfo
+			})
+			document.addEventListener('refresh', function () {
+				var userinfo = window.localStorage.getItem('Userinfo') || '{}'
+				userinfo = userinfo ? (JSON.parse(userinfo) || {}) : {};
+				vm.userinfo = userinfo
+			})
+		</script>
+	</body>
+</html>

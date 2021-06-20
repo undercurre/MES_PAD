@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<script src="../../js/qs.js"></script>
+		<!-- 引入vue -->
+		<script src="../../js/vue.min.js"></script>
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../../css/elementUi.min.css">
+		<link rel="stylesheet" href="../../css/vant.min.css" />
+		<script src="../../js/common.js"></script>
+		<!-- 引入组件库 -->
+		<script src="../../js/elementUi.min.js"></script>
+		<script src="../../js/vant.min.js"></script>
+		<script src="../../js/mui.min.js"></script>
+		<link href="../../css/mui.min.css" rel="stylesheet" />
+		<script src="../../js/utils.js"></script>
+		<link rel="stylesheet" href="../../css/MesProductionPreMst.css">
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../../css/vxe-table-2.9.5.min.css">
+		<!-- 引入脚本 -->
+		<script src="../../js/day.js"></script>
+		<script src="../../js/xe-utils.min.js"></script>
+		<script src="../../js/vxe-table-2.9.5.min.js"></script>
+		<script src="../../js/es5-shim.min.js"></script>
+		<script src="../../js/promise-6.1.0.js"></script>
+		<script>
+			if('addEventListener'in document) {
+			     document.addEventListener('DOMContentLoaded',function() {
+			     FastClick.attach(document.body);
+			   },false);
+			}
+		</script>
+	</head>
+	<body>
+		<div id="app" class="page">
+			<div class="custom-container-full">
+				<div class="custom-container-full__header" ref="header">
+					<div>
+						<div class="custom-container-header">
+							<div class="transform-cx">
+								<div class="cch-block">
+									<el-page-header @back="goBack" content="新增产前确认">
+										<template #content>
+											<el-select v-model="listQuery.IPQA_TYPE" clearable style="width: 200px" placeholder="请选择巡检分类" size="small">
+												<el-option v-for="item in sort" :key="item.ID" :label="item.SBU_CHINESE" :value="item.ID" />
+											</el-select>
+											<el-button type="warning" icon="el-icon-finished" @click="drawer = true" size="small">筛选</el-button>
+											<el-button type="success" icon="el-icon-plus" @click.prevent="add_but" size="small">新增</el-button>
+										</template>
+									</el-page-header>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="custom-container-full__body" ref="body">
+					<div class="out-table-container" :style="{
+						height: tableHeight
+					}">
+						<van-swipe-cell v-for="(dataItem,index) in tableDataEnd" :key="dataItem.ID" stop-propagation>
+							<el-card class="box-card" style="margin-bottom: 10px;">
+								<div slot="header" class="clearfix">
+									<span>单据编号: {{dataItem.BILL_CODE}}</span>
+									<div style="float: right;">
+										<!-- <el-button type="primary" @tap.native="editRow(scoped.row)" size="small">编辑</el-button>
+						 			<el-button type="danger" @tap.native="removeClick(scoped.row)" size="small">删除</el-button> -->
+										<!-- <el-link type="primary" style="margin-right: 10px;line-height: 1rem;" icon="el-icon-edit">编辑</el-link>
+						 			<el-link type="danger" style="line-height: 1rem;" icon="el-icon-delete">删除</el-link> -->
+										<el-tag v-if="dataItem.CHECK_STATUS === 0" type="warning" effect="dark" size="mini">
+											待审核
+										</el-tag>
+										<el-tag v-if="dataItem.CHECK_STATUS === 1" type="success" effect="dark" size="mini">
+											已审核
+										</el-tag>
+										<el-tag v-if="dataItem.CHECK_STATUS === 3" type="danger" effect="dark" size="mini">
+											拒绝
+										</el-tag>
+										<el-tag v-if="dataItem.CHECK_STATUS === 4" type="primary" effect="dark" size="mini">
+											新增
+										</el-tag>
+									</div>
+								</div>
+								<div>
+									<el-row gutter="20">
+										<el-col span="12"><span>点检分类: {{dataItem.LINE_NAME}}</span></el-col>
+										<el-col span="12"><span>经营单位: {{dataItem.BUSINESS_UNIT}}</span></el-col>
+									</el-row>
+									<el-row gutter="20">
+										<el-col span="12"><span>部门: {{dataItem.DEPARTMENT}}</span></el-col>
+										<el-col span="12"><span>线别: {{dataItem.U_LINE}}</span></el-col>
+									</el-row>
+									<el-row gutter="20">
+										<el-col span="12"><span>产品名称: {{dataItem.PRODUCT_NAME}}</span></el-col>
+										<el-col span="12"><span>产品型号: {{dataItem.PRODUCT_MODEL}}</span></el-col>
+									</el-row>
+									<el-row gutter="20">
+										<el-col span="12"><span>巡检时间: {{dataItem.CREATETIME}}</span></el-col>
+										<el-col span="12"><span>审核时间: {{dataItem.PRODUCTION_TIME}}</span></el-col>
+									</el-row>
+									<el-row gutter="20">
+										<el-col span="24">
+											<el-button type="primary" icon="el-icon-edit" @click.prevent="edit_but(dataItem)" size="mini">编辑</el-button>
+											<el-button type="danger" icon="el-icon-delete" @click="remove_but(dataItem)" size="mini">删除</el-button>
+											<el-button type="primary" icon="el-icon-circle-check" @click.prevent="review_but(dataItem)" size="mini">审核</el-button>
+											<el-button type="danger" icon="el-icon-close" @click.prevent="refuse_but(dataItem)" size="mini">拒绝</el-button>
+										</el-col>
+									</el-row>
+								</div>
+								<div style="display: flex;justify-content: space-between;border-top: 1px solid #EBEEF5;padding-top: 5px;">
+									<div>创建人:{{dataItem.CREATOR}}</div>
+									<div>创建时间:{{dataItem.CREATEDATE}}</div>
+								</div>
+							</el-card>
+						</van-swipe-cell>
+					</div>
+				</div>
+				<div class="custom-container-full__footer" ref="footer">
+					<el-pagination :current-page="listQuery.Page" pager-count="3" :page-size="listQuery.Limit" :page-sizes="[15, 25, 35, 45]"
+					 layout="total, prev, pager, next, jumper" :total="total" @size-change="handleSizeChange" @current-change="handleCurrentChange"></el-pagination>
+				</div>
+			</div>
+			<van-popup v-model="drawer" round position="bottom">
+				<div style="padding: 20px 20px  4px 20px;display: flex;flex-flow: column;height: 100%;overflow: hidden;">
+					<el-form style="flex: 1;overflow: auto;" class="custom-form" ref="formData" label-position="left" label-width="80px"
+					 :model="listQuery" size="mini">
+						<el-form-item label="经营单位">
+							<el-input v-model="listQuery.CATEGORY_NAME" readonly clickable @click.native="showCategoryPicker=true" clearable></el-input>
+						</el-form-item>
+						<el-form-item label="部门" prop="DEPARTMENT">
+							<el-input v-model="listQuery.DEPARTMENT_NAME" readonly clickable @click.native="showDepartmentPicker=true"
+							 clearable></el-input>
+						</el-form-item>
+						<el-form-item label="线别" prop="U_LINE">
+							<el-input v-model="listQuery.U_LINE_DESC" readonly clickable @click.native="showLinePicker=true" clearable></el-input>
+						</el-form-item>
+						<el-form-item label="巡检分类" prop="IPQA_TYPE">
+							<el-input v-model="listQuery.IPQA_TYPE_DESC" readonly clickable @click.native="showIPQATypePicker=true"
+							 clearable></el-input>
+						</el-form-item>
+						<el-form-item label="产品名称" prop="Key">
+							<el-input v-model="listQuery.Key_DESC" placeholder=" " clearable style="width:100%" />
+						</el-form-item>
+						<el-form-item label="日期" prop="CUSTOMER_ID">
+							<!-- <el-input v-model="listQuery.PRODUCTION_TIME" readonly @click.native="showProductionTimePicker=true" clearable>
+								<i slot="suffix" class="el-input__icon el-icon-date"></i>
+							</el-input> -->
+							<el-date-picker readonly v-model="value2" style="width:100%;" type="daterange" align="right" unlink-panels
+							 start-placeholder="开始日期" end-placeholder="结束日期" value-format="yyyy-MM-dd"
+							  :picker-options="pickerOptions"
+							   @click.native="showProductionTimePicker=true"
+							   />
+						</el-form-item>
+						<!-- <el-form-item label="日期" prop="CUSTOMER_ID">
+							
+						</el-form-item> -->
+					</el-form>
+					<el-row gutter="0" style="margin-top: 10px;">
+						<el-col span="12">
+							<el-button type="primary" @click="searchClick" style="width:100%;border-radius: 4px 0px 0px 4px;">搜索</el-button>
+						</el-col>
+						<el-col span="12">
+							<el-button type="danger" @click="resetListQuery" style="width:100%;border-radius: 0px 4px 4px 0px;">重置</el-button>
+						</el-col>
+					</el-row>
+				</div>
+			</van-popup>
+			<van-popup v-model="showCategoryPicker" round position="bottom">
+				<van-picker show-toolbar :columns="options" value-key="CHINESE" title="经营单位" item-height="40" visible-item-count="10"
+				 @cancel="showCategoryPicker = false" @confirm="dealCategoryPicker" />
+			</van-popup>
+			<van-popup v-model="showDepartmentPicker" round position="bottom">
+				<van-picker show-toolbar :columns="GetDepartmentList" value-key="CHINESE" title="部门" item-height="40"
+				 visible-item-count="10" @cancel="showDepartmentPicker = false" @confirm="dealDepartmentPicker" />
+			</van-popup>
+			<van-popup v-model="showLinePicker" round position="bottom">
+				<van-picker show-toolbar :columns="line" value-key="LINE_NAME" title="线别" item-height="40" visible-item-count="10"
+				 @cancel="showLinePicker = false" @confirm="dealLinePicker" />
+			</van-popup>
+			<van-popup v-model="showIPQATypePicker" round position="bottom">
+				<van-picker show-toolbar :columns="sort" value-key="SBU_CHINESE" title="巡检分类" item-height="40" visible-item-count="10"
+				 @cancel="showIPQATypePicker = false" @confirm="dealIPQATypePicker" />
+			</van-popup>
+			<van-popup v-model="showNewItemTypePicker" round position="bottom">
+				<van-picker show-toolbar :columns="sort" value-key="SBU_CHINESE" title="选择需要新增的巡检分类" item-height="40" visible-item-count="10"
+				 @cancel="showNewItemTypePicker = false" @confirm="addItem" />
+			</van-popup>
+			<van-calendar v-model="showProductionTimePicker" type="range" @confirm="dealProductionTime" :formatter="formatter" 
+			:min-date="minDate"
+			/>
+		</div>
+		<script>
+			mui.init({
+				preloadPages: [ // 页面预加载
+					// {
+					// 	url: '/pages/ipqaMstModify/index.html',
+					// 	id: 'ipqaMstModify'
+					// }
+				],
+				// pullRefresh: {
+				// 	container: '#app',
+				// 	down: {
+				// 		style: 'circle', //必选，下拉刷新样式，目前支持原生5+ ‘circle’ 样式
+				// 		color: '#2BD009', //可选，默认“#2BD009” 下拉刷新控件颜色
+				// 		height: '50px', //可选,默认50px.下拉刷新控件的高度,
+				// 		range: '100px', //可选 默认100px,控件可下拉拖拽的范围
+				// 		offset: '0px', //可选 默认0px,下拉刷新控件的起始位置
+				// 		auto: false, //可选,默认false.首次加载自动上拉刷新一次
+				// 		callback: function() {
+				// 			app.resetListQuery()
+				// 			app.computedTableHeight()
+				// 			app.getSelelist(true)
+				// 		} //必选，刷新函数，根据具体业务来编写，比如通过ajax从服务器获取新数据；
+				// 	}
+				// }
+			});
+		</script>
+
+		<script>
+			var app = new Vue({
+				el: '#app',
+				data: {
+					tableHeight: '200px',
+					drawer: false,
+					listLoading: false,
+					options: [],
+					line: [],
+					sort: [{
+							ID: 0,
+							SBU_CHINESE: 'SMT车间巡检'
+						},
+						{
+							ID: 1,
+							SBU_CHINESE: '产线车间巡检'
+						}
+					],
+					GetDepartmentList: [],
+					DepartmentList: [],
+					productval: '',
+					pickerOptions: {
+						shortcuts: [{
+								text: '最近一周',
+								onClick: function(picker) {
+									var end = new Date()
+									var start = new Date()
+									start.setTime(start.getTime() - 3600 * 1000 * 24 * 7)
+									picker.$emit('pick', [start, end])
+								}
+							},
+							{
+								text: '最近一个月',
+								onClick: function(picker) {
+									var end = new Date()
+									var start = new Date()
+									start.setTime(start.getTime() - 3600 * 1000 * 24 * 30)
+									picker.$emit('pick', [start, end])
+								}
+							},
+							{
+								text: '最近三个月',
+								onClick: function(picker) {
+									var end = new Date()
+									var start = new Date()
+									start.setTime(start.getTime() - 3600 * 1000 * 24 * 90)
+									picker.$emit('pick', [start, end])
+								}
+							}
+						]
+					},
+					value2: '',
+					tableDataEnd: [],
+					total: 0,
+					listQuery: {
+						Page: 1, // 当前页
+						Limit: 10, // 分页大小
+						CATEGORY: '',
+						CATEGORY_NAME: '',
+						BUSINESS_UNIT: '', // 选择经营
+						DEPARTMENT: '', // 选择部门
+						DEPARTMENT_NAME: '',
+						U_LINE: '', // 选择线级别
+						U_LINE_DESC: '',
+						Key: '', // 产品名称
+						Key_desc: '',
+						IPQA_TYPE: '', // 巡检分类
+						IPQA_TYPE_DESC: '',
+						create_begin: null,
+						create_end: null
+					},
+					tableval: [],
+					radio: '',
+					// 编辑
+					editObj: {
+						id: 0,
+						ipqa_type: ''
+					},
+					// 审核和拒绝
+					checkBill: {
+						ID: null,
+						Operator: null
+					},
+					showProductionTimePicker: false,
+					showCategoryPicker: false,
+					showDepartmentPicker: false,
+					showLinePicker: false,
+					showIPQATypePicker: false,
+					showNewItemTypePicker:false,
+					minDate: dayjs().subtract(6,'month').$d
+				},
+				computed: {
+					userinfo: function() {
+						var userinfo = window.localStorage.getItem('Userinfo')
+						userinfo = userinfo ? JSON.parse(userinfo) : {};
+						return userinfo
+					}
+				},
+				methods: {
+					resetListQuery: function() {
+						this.listQuery = {
+							Page: 1, // 当前页
+							Limit: 15, // 分页大小
+							BUSINESS_UNIT: '', // 选择经营
+							DEPARTMENT: '', // 选择部门
+							U_LINE: '', // 选择线级别
+							Key: '', // 产品名称
+							IPQA_TYPE: '', // 巡检分类
+							create_begin: null,
+							create_end: null
+						}
+					},
+					goBack: function() {
+						mui.back()
+					},
+					computedTableHeight: function() {
+						var windowHeight = document.body.clientHeight || document.documentElement.clientHeight
+						this.tableHeight = (windowHeight - 57 - 54 - 5 - 10) + 'px'
+					},
+					// 获取下拉菜单
+					getSelelist: function(isPullFresh) {
+						var that = this
+						http({
+							url: 'IpqaMst/Index',
+							method: 'get',
+							params: {},
+							success: function(res) {
+								if (res.Result) {
+									var data = res.Result
+									that.options = data.BusinessUnitsList
+									that.line = data.LineList
+									that.GetDepartmentList = data.DepartmentList
+									that.DepartmentList = data.DepartmentList
+									that.getList(isPullFresh)
+								}
+							}
+						})
+					},
+					// 获取用户列表
+					getList: function(isPullFresh) {
+						var that = this
+						that.listLoading = true
+						http({
+							url: 'IpqaMst/LoadData',
+							method: 'get',
+							params: that.listQuery,
+							success: function(res) {
+								that.listLoading = false
+								if (isPullFresh) {
+									mui('#app').pullRefresh().endPulldown()
+								}
+								if (res.Result) {
+									var data = JSON.parse(res.Result || [])
+									that.tableDataEnd = data
+									that.total = res.TotalCount
+								}
+							},
+							error: function() {
+								that.listLoading = false
+								if (isPullFresh) {
+									mui('#app').pullRefresh().endPulldown()
+								}
+							}
+						})
+					},
+					// 过滤部门
+					business_but: function(val) {
+						this.GetDepartmentList = []
+						var that = this
+						this.DepartmentList.forEach(function(v) {
+							if (v.SBU_ID !== val) {
+								that.GetDepartmentList = []
+								that.listQuery.DEPARTMENT = ''
+							} else {
+								that.GetDepartmentList.push(v)
+							}
+						})
+					},
+					// 删除
+					remove_but: function(dataItem) {
+						var that = this
+						plus.nativeUI.confirm('确认要删除？', function(e) {
+							if (e.index === 0) {
+								http({
+									url: 'IpqaMst/Delete',
+									params: {
+										id: dataItem.ID
+									},
+									method: 'get',
+									success: function(res) {
+										if (res.Result) {
+											plus.nativeUI.alert('删除成功', function() {
+
+											}, '成功')
+											tips('success')
+											that.getList()
+										} else {
+											plus.nativeUI.toast('删除失败', function() {
+
+											}, '失败')
+											tips('error')
+										}
+									}
+								})
+							}
+						}, "确认", ["确定", "取消"])
+					},
+					// 点击获取表格一行数据
+					obtain_but: function(row) {
+						this.editObj._id = row.ID
+						this.editObj.ipqa_type = row.IPQA_TYPE
+						this.tableval = row
+						this.radio = this.tableDataEnd.indexOf(row)
+					},
+					// 搜索
+					searchClick: function() {
+						this.listQuery.Page = 1
+						if (this.value2) {
+							this.listQuery.create_begin = this.value2[0]
+							this.listQuery.create_end = this.value2[1]
+						} else {
+							this.listQuery.create_begin = ''
+							this.listQuery.create_end = ''
+						}
+						this.drawer = false
+						this.getList()
+					},
+					// 添加
+					add_but: function() {
+						this.showNewItemTypePicker = true
+					},
+					addItem:function(dataItem){
+						var webview = plus.webview.getWebviewById('ipqaMstModify')
+						if (webview) {
+							mui.fire(webview, 'refresh', {
+								_id:0,
+								ipqa_type:dataItem.ID
+							})
+							webview.show()
+						} else {
+							href('/pages/ipqaMstModify/index.html', 'ipqaMstModify', this.editObj)
+						}
+						this.showNewItemTypePicker=false
+					},
+					// 编辑
+					edit_but: function(dataItem) {
+						// if (this.tableval.length === 0) {
+						// 	plus.nativeUI.toast('请选择编辑数据行')
+						// 	tips('error')
+						// 	return false
+						// }
+						var webview = plus.webview.getWebviewById('ipqaMstModify')
+						if (webview) {
+							mui.fire(webview, 'refresh', {
+								id:dataItem.ID,
+								ipqa_type:dataItem.IPQA_TYPE
+							})
+							webview.show()
+						} else {
+							href('/pages/ipqaMstModify/index.html', 'ipqaMstModify', {
+								id:dataItem.ID,
+								ipqa_type:dataItem.IPQA_TYPE
+							})
+						}
+					},
+					// 审核
+					review_but: function(dataItem) {
+						var that = this
+						plus.nativeUI.confirm('确定要拒绝吗？', function(e) {
+							if (e.index === 0) {
+								that.checkBill.ID = dataItem.ID
+								that.checkBill.Operator = that.userinfo.USER_NAME
+								http({
+									url: 'IpqaMst/CheckBill',
+									method: 'post',
+									params: that.checkBill,
+									success: function(res) {
+										if (res.Result) {
+											plus.nativeUI.alert('审核成功', function() {}, '成功')
+											tips('success')
+											that.getList()
+										} else {
+											plus.nativeUI.alert('审核失败', function() {}, '失败')
+										}
+									}
+								})
+							}
+						}, "确认", ["确定", "取消"])
+					},
+					// 拒绝
+					refuse_but: function(dataItem) {
+						var that = this
+						plus.nativeUI.confirm('确定要拒绝吗？', function(e) {
+							if (e.index === 0) {
+								that.checkBill.ID = dataItem.ID
+								that.checkBill.Operator = that.userinfo.USER_NAME
+								http({
+									url: 'IpqaMst/RejectBill',
+									method: 'post',
+									params: that.checkBill,
+									success: function(res) {
+										if (res.Result) {
+											plus.nativeUI.alert('拒绝成功', function() {}, '成功')
+											tips('success')
+											that.getList()
+										} else {
+											plus.nativeUI.alert('拒绝失败', function() {}, '失败')
+										}
+									}
+								})
+							}
+						}, "确认", ["确定", "取消"])
+					},
+					handleSizeChange: function(val) {
+						this.listQuery.Limit = val
+						this.getList()
+					},
+					handleCurrentChange: function(val) {
+						this.listQuery.Page = val
+						this.getList()
+					},
+					dealProductionTime: function(date) {
+						// console.log(date)
+						// this.value2 = this.dateFormat('YY-mm-dd', date)
+						this.value2 = date
+						this.showProductionTimePicker = false
+					},
+					dateFormat: function(fmt, date) {
+						let ret;
+						const opt = {
+							"Y+": date.getFullYear().toString(), // 年
+							"m+": (date.getMonth() + 1).toString(), // 月
+							"d+": date.getDate().toString(), // 日
+							"H+": date.getHours().toString(), // 时
+							"M+": date.getMinutes().toString(), // 分
+							"S+": date.getSeconds().toString() // 秒
+							// 有其他格式化字符需求可以继续添加，必须转化成字符串
+						};
+						for (let k in opt) {
+							ret = new RegExp("(" + k + ")").exec(fmt);
+							if (ret) {
+								fmt = fmt.replace(ret[1], (ret[1].length == 1) ? (opt[k]) : (opt[k].padStart(ret[1].length, "0")))
+							};
+						};
+						return fmt;
+					},
+					//格式化日期
+					formatter: function(day) {
+						return day
+					},
+					dealCategoryPicker: function(dataItem) {
+						this.listQuery.CATEGORY = dataItem.ID
+						this.listQuery.CATEGORY_NAME = dataItem.CHINESE
+						this.showCategoryPicker = false
+					},
+					dealDepartmentPicker: function(dataItem) {
+						this.listQuery.DEPARTMENT = dataItem.ID
+						this.listQuery.DEPARTMENT_NAME = dataItem.CHINESE
+						this.showDepartmentPicker = false
+					},
+					dealLinePicker: function(dataItem) {
+						this.listQuery.U_LINE = dataItem.ID
+						this.listQuery.U_LINE_DESC = dataItem.LINE_NAME
+						this.showLinePicker = false
+					},
+					dealIPQATypePicker: function(dataItem) {
+						this.listQuery.IPQA_TYPE = dataItem.ID
+						this.listQuery.IPQA_TYPE_DESC = dataItem.SBU_CHINESE
+						this.showIPQATypePicker = false
+					}
+				},
+				created: function() {
+
+				}
+			})
+			mui.plusReady(function() {
+				app.computedTableHeight()
+				app.getSelelist()
+			})
+			document.addEventListener('refresh', function(e) {
+				app.computedTableHeight()
+				app.getSelelist()
+			})
+		</script>
+	</body>
+</html>

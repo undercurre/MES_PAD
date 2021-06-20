@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<script src="../../js/qs.js"></script>
+		<!-- 引入vue -->
+		<script src="../../js/vue.min.js"></script>
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../../css/elementUi.min.css">
+		<link rel="stylesheet" href="../../css/vant.min.css" />
+		<script src="../../js/common.js"></script>
+		<!-- 引入组件库 -->
+		<script src="../../js/elementUi.min.js"></script>
+		<script src="../../js/vant.min.js"></script>
+		<script src="../../js/mui.min.js"></script>
+		<link href="../../css/mui.min.css" rel="stylesheet" />
+		<script src="../../js/utils.js"></script>
+		<link rel="stylesheet" href="../../css/MesProductionPreMst.css">
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../../css/vxe-table-2.9.5.min.css">
+		<!-- 引入脚本 -->
+		<script src="../../js/day.js"></script>
+		<script src="../../js/xe-utils.min.js"></script>
+		<script src="../../js/vxe-table-2.9.5.min.js"></script>
+		<script src="../../js/es5-shim.min.js"></script>
+		<script src="../../js/promise-6.1.0.js"></script>
+		<script>
+			if('addEventListener'in document) {
+			     document.addEventListener('DOMContentLoaded',function() {
+			     FastClick.attach(document.body);
+			   },false);
+			}
+		</script>
+	</head>
+	<body>
+		<div id="app" class="page">
+			<div class="custom-container-full">
+				<div class="custom-container-full__header" ref="header">
+					<div>
+						<div class="custom-container-header">
+							<div class="transform-cx">
+								<div class="cch-block">
+									<el-page-header @back="goBack" content="">
+										<template #content>
+											<el-input style="width: 50%;" placeholder="请输入工单号" suffix-icon="el-icon-search" v-model="listQuery.WO_NO"
+											 size="small" @input="searchByWONO">
+											</el-input>
+											<el-button type="warning" icon="el-icon-finished" @click="drawer = true" size="small">筛选</el-button>
+											<el-button type="success" icon="el-icon-plus" @click.prevent="add_but" size="small">新增</el-button>
+										</template>
+									</el-page-header>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="custom-container-full__body" ref="body">
+					<div class="out-table-container" :style="{
+						height: tableHeight
+					}">
+						<div style="margin-bottom: 5px;">
+							<el-tag v-if="conditions.U_LINE_DESC !== ''" @close="resetFilter('line')" closable>
+								{{conditions.U_LINE_DESC}}
+							</el-tag>
+							<el-tag v-if="conditions.STATUS_DESC !== ''" @close="resetFilter('status')" closable>
+								{{conditions.STATUS_DESC}}
+							</el-tag>
+							<el-tag v-if="conditions.RESULT_DESC !== ''" @close="resetFilter('result')" closable>
+								{{conditions.RESULT_DESC}}
+							</el-tag>
+						</div>
+						<van-swipe-cell v-for="(dataItem,index) in mainData" :key="dataItem.BATCH_NO" stop-propagation>
+							<el-card class="box-card" style="margin-bottom: 10px;">
+								<div slot="header" class="clearfix">
+									<span>批次号: {{dataItem.BATCH_NO}}</span>
+									<div style="float: right;">
+										<!-- <el-button type="primary" @tap.native="editRow(scoped.row)" size="small">编辑</el-button>
+						 			<el-button type="danger" @tap.native="removeClick(scoped.row)" size="small">删除</el-button> -->
+										<!-- <el-link type="primary" style="margin-right: 10px;line-height: 1rem;" icon="el-icon-edit">编辑</el-link>
+						 			<el-link type="danger" style="line-height: 1rem;" icon="el-icon-delete">删除</el-link> -->
+										<el-tag v-if="dataItem.RESULT === 0" type="success" effect="dark" size="mini">
+											合格
+										</el-tag>
+										<el-tag v-if="dataItem.RESULT === 1" type="primary" effect="dark" size="mini">
+											特采
+										</el-tag>
+										<el-tag v-if="dataItem.RESULT === 2" type="warning" effect="dark" size="mini">
+											返工
+										</el-tag>
+										<el-tag v-if="dataItem.RESULT === 3" type="danger" effect="dark" size="mini">
+											报废
+										</el-tag>
+										<el-tag v-if="dataItem.RESULT === null" type="info" effect="dark" size="mini">
+											未知
+										</el-tag>
+									</div>
+								</div>
+								<div>
+									<el-row gutter="20">
+										<el-col span="12"><span>批量: {{dataItem.WO_QTY}}</span></el-col>
+										<el-col span="12"><span>批次: {{dataItem.ORDER_NO}}</span></el-col>
+									</el-row>
+									<el-row gutter="20">
+										<el-col span="12"><span>产线: {{dataItem.LINE_NAME}}</span></el-col>
+										<el-col span="12"><span>工单: {{dataItem.WO_NO}}</span></el-col>
+									</el-row>
+									<el-row gutter="20">
+										<el-col span="12"><span>状态:
+												<span v-if="dataItem.STATUS == 0" style="font-weight:800;color:orange">初始</span>
+												<span v-if="dataItem.STATUS == 3" style="font-weight:800;color:blue">已审核</span>
+											</span></el-col>
+										<el-col span="12"><span>料号: {{dataItem.PART_NO}}</span></el-col>
+									</el-row>
+									<el-row gutter="20">
+										<el-col span="12"><span>品名: {{dataItem.PART_NAME}}</span></el-col>
+										<el-col span="12"><span>规格: {{dataItem.PART_DESC}}</span></el-col>
+									</el-row>
+									<el-row gutter="20">
+										<el-col span="12"><span>班次: {{dataItem.WO_CLASS}}</span></el-col>
+										<!-- <el-col span="12"><span>备注: {{dataItem.REMARK}}</span></el-col> -->
+									</el-row>
+									<el-row gutter="20">
+										<el-col span="12"><span>外观抽检数: {{dataItem.OUTER_CHECK_QTY}}</span></el-col>
+										<el-col span="12"><span>外观不良数: {{dataItem.OUTER_FAIL_QTY}}</span></el-col>
+									</el-row>
+									<el-row gutter="20">
+										<el-col span="12"><span>送检数: {{dataItem.ALL_QTY}}</span></el-col>
+										<el-col span="6"><span>抽检数: {{dataItem.CHECK_QTY}}</span></el-col>
+										<el-col span="6"><span>不良数: {{dataItem.FAIL_QTY}}</span></el-col>
+									</el-row>
+									<!-- <el-row gutter="20">
+										<el-col span="24"><span>备注: {{dataItem.REMARK}}</span></el-col>
+									</el-row> -->
+									<el-row gutter="20">
+										<el-col span="24">
+											<!-- <el-input type="textarea" :rows="2" readonly v-model="dataItem.REMARK">
+												备注：
+											</el-input> -->
+											<el-card class="box-card" style="min-height: 5rem;background-color: #F3F3F3;" shadow="never">
+												备注：{{dataItem.REMARK}}
+											</el-card>
+										</el-col>
+									</el-row>
+									<el-row gutter="20">
+										<el-col span="24">
+											<el-button type="primary" @click.prevent="edit_but(dataItem)" size="mini" v-if="dataItem.STATUS !== 0">查看</el-button>
+											<el-button type="primary" @click.prevent="edit_but(dataItem)" size="mini" v-if="dataItem.STATUS === 0">编辑</el-button>
+											<el-button type="danger" @click="remove_but(dataItem)" size="mini" v-if="dataItem.STATUS === 0">删除</el-button>
+											<el-button type="primary" @click.prevent="review_but(dataItem)" size="mini" v-if="dataItem.STATUS === 0">审核</el-button>
+											<!-- <el-button type="success" @click.prevent="check_but(dataItem)" size="mini" v-if="dataItem.STATUS === 0">抽检记录</el-button> -->
+										</el-col>
+									</el-row>
+								</div>
+								<div style="display: flex;justify-content: space-between;border-top: 1px solid #EBEEF5;padding-top: 5px;">
+									<div>检验人:{{dataItem.CHECKER}}</div>
+									<div>审核人:{{dataItem.AUDITOR}}</div>
+									<div>创建时间:{{dataItem.CREATE_DATE}}</div>
+								</div>
+							</el-card>
+						</van-swipe-cell>
+					</div>
+				</div>
+				<div class="custom-container-full__footer" ref="footer">
+					<el-pagination :current-page="listQuery.Page" pager-count="3" :page-size="listQuery.Limit" :page-sizes="[15, 25, 35, 45]"
+					 layout="total, prev, pager, next, jumper" :total="total" @size-change="handleSizeChange" @current-change="handleCurrentChange"></el-pagination>
+				</div>
+			</div>
+			<van-popup v-model="drawer" round position="bottom">
+				<div style="padding: 20px 20px  4px 20px;display: flex;flex-flow: column;height: 100%;overflow: hidden;">
+					<el-form style="flex: 1;overflow: auto;" class="custom-form" ref="formData" label-position="left" label-width="80px"
+					 :model="listQuery" size="mini">
+						<el-form-item label="线别" prop="U_LINE">
+							<el-input v-model="listQueryDesc.U_LINE_DESC" readonly clickable @click.native="showLinePicker=true" clearable></el-input>
+						</el-form-item>
+						<el-form-item label="状态" prop="IPQA_TYPE">
+							<el-radio v-model="listQuery.STATUS" label="-1">全部</el-radio>
+							<el-radio v-model="listQuery.STATUS" label="0">初始</el-radio>
+							<el-radio v-model="listQuery.STATUS" label="3">已审核</el-radio>
+						</el-form-item>
+						<el-form-item label="抽验结果" prop="result">
+							<el-input v-model="listQueryDesc.RESULT_DESC" readonly clickable @click.native="showResultPicker=true" clearable></el-input>
+						</el-form-item>
+					</el-form>
+					<el-row gutter="0" style="margin-top: 10px;">
+						<el-col span="12">
+							<el-button type="primary" @click="searchClick" style="width:100%;border-radius: 4px 0px 0px 4px;">搜索</el-button>
+						</el-col>
+						<el-col span="12">
+							<el-button type="danger" @click="resetListQuery" style="width:100%;border-radius: 0px 4px 4px 0px;">重置</el-button>
+						</el-col>
+					</el-row>
+				</div>
+			</van-popup>
+			<!-- <van-popup v-model="showCategoryPicker" round position="bottom">
+				<van-picker show-toolbar :columns="options" value-key="CHINESE" title="经营单位" item-height="40" visible-item-count="10"
+				 @cancel="showCategoryPicker = false" @confirm="dealCategoryPicker" />
+			</van-popup>
+			<van-popup v-model="showDepartmentPicker" round position="bottom">
+				<van-picker show-toolbar :columns="GetDepartmentList" value-key="CHINESE" title="部门" item-height="40"
+				 visible-item-count="10" @cancel="showDepartmentPicker = false" @confirm="dealDepartmentPicker" />
+			</van-popup> -->
+			<van-popup v-model="showLinePicker" round position="bottom">
+				<van-picker show-toolbar :columns="line" value-key="LINE_NAME" title="线别" item-height="40" visible-item-count="10"
+				 @cancel="showLinePicker = false" @confirm="dealLinePicker" />
+			</van-popup>
+			<van-popup v-model="showResultPicker" round position="bottom">
+				<van-picker show-toolbar :columns="results" value-key="desc" title="抽验结果" item-height="40" visible-item-count="10"
+				 @cancel="showResultPicker = false" @confirm="dealResultPicker" />
+			</van-popup>
+		</div>
+		<script>
+			mui.init({
+				preloadPages: [ // 页面预加载
+					// {
+					// 	url: '/pages/ipqaMstModify/index.html',
+					// 	id: 'ipqaMstModify'
+					// }
+				],
+				// pullRefresh: {
+				// 	container: '#app',
+				// 	down: {
+				// 		style: 'circle', //必选，下拉刷新样式，目前支持原生5+ ‘circle’ 样式
+				// 		color: '#2BD009', //可选，默认“#2BD009” 下拉刷新控件颜色
+				// 		height: '50px', //可选,默认50px.下拉刷新控件的高度,
+				// 		range: '100px', //可选 默认100px,控件可下拉拖拽的范围
+				// 		offset: '0px', //可选 默认0px,下拉刷新控件的起始位置
+				// 		auto: false, //可选,默认false.首次加载自动上拉刷新一次
+				// 		callback: function() {
+				// 			app.resetListQuery()
+				// 			app.computedTableHeight()
+				// 			app.getSelelist(true)
+				// 		} //必选，刷新函数，根据具体业务来编写，比如通过ajax从服务器获取新数据；
+				// 	}
+				// }
+			});
+		</script>
+
+		<script>
+			var app = new Vue({
+				el: '#app',
+				data: {
+					tableHeight: '200px',
+					line: [],
+					results: [{
+							value: 0,
+							desc: '合格'
+						},
+						{
+							value: 1,
+							desc: '特采'
+						},
+						{
+							value: 2,
+							desc: '返工'
+						},
+						{
+							value: 3,
+							desc: '报废'
+						}
+					],
+					badColumns: [],
+					total: 0,
+					listQuery: {
+						Page: 1, // 当前页
+						Limit: 10, // 分页大小
+						LINE_ID: 0, // 线
+						STATUS: -1, // 状态
+						WO_NO: '', // 工单号
+						RESULT: -1 // 结果
+					},
+					listQueryDesc: {
+						U_LINE_DESC: '',
+						RESULT_DESC: ''
+					},
+					conditions: {
+						U_LINE_DESC: '',
+						RESULT_DESC: '',
+						STATUS_DESC: ''
+					},
+					drawer: false,
+					mainData: [],
+					// 编辑
+					editObj: {
+						id: 0,
+						ipqa_type: ''
+					},
+					// 审核和拒绝
+					checkBill: {
+						ID: null,
+						Operator: null
+					},
+					checkFormData: {
+						ID: 0,
+						BATCH_NO: '', // 抽检批次号
+						SN: '', // 流水号
+						STATUS: 'PASS', // 状态
+						DEFECT_CODE: '', // 不良代码
+						DEFECT_LOC: '', // 不良位号
+						DEFECT_DESCRIPTION: '', // 不良描述
+						DEFECT_MSG: '', // 不良想象
+						CREATOR: ''
+					},
+					fectVal: {
+						Page: 1,
+						Limit: 10,
+						DEFECT_TYPE: 0,
+						DEFECT_CLASS: 0,
+						DEFECT_CATEGORY: 0,
+						DEFECT_LEVEL_CODE: 0
+					},
+					fectValtotal: 0,
+					TypeList:[],
+					ClassList:[],
+					CategoryList:[],
+					LevelList:[],
+					showLinePicker: false,
+					showResultPicker: false,
+					showCheckFormPicker: false,
+					showDefectCodePicker: false,
+					minDate: dayjs().subtract(6, 'month').$d
+				},
+				computed: {
+					userinfo: function() {
+						var userinfo = window.localStorage.getItem('Userinfo')
+						userinfo = userinfo ? JSON.parse(userinfo) : {};
+						return userinfo
+					}
+				},
+				methods: {
+					resetListQuery: function() {
+						this.listQuery = {
+								Page: 1, // 当前页
+								Limit: 10, // 分页大小
+								LINE_ID: 0, // 线
+								STATUS: -1, // 状态
+								WO_NO: '', // 工单号
+								RESULT: -1 // 结果
+							},
+							this.listQueryDesc = {
+								U_LINE_DESC: '',
+								RESULT_DESC: ''
+							}
+						this.conditions = {
+							U_LINE_DESC: "",
+							RESULT_DESC: '',
+							STATUS_DESC: ''
+						}
+					},
+					goBack: function() {
+						mui.back()
+					},
+					computedTableHeight: function() {
+						var windowHeight = document.body.clientHeight || document.documentElement.clientHeight
+						this.tableHeight = (windowHeight - 57 - 54 - 5 - 10) + 'px'
+					},
+					// 获取产线值集
+					getSelelist: function(isPullFresh) {
+						var that = this
+						http({
+							url: 'MesSpotcheckHeader/Index',
+							method: 'get',
+							params: {},
+							success: function(res) {
+								if (res.Result) {
+									var data = res.Result
+									that.line = data
+									that.getList(isPullFresh)
+								}
+							}
+						})
+					},
+					getLoadDefectData() {
+						var that = this
+						http({
+							url: 'MesSpotcheckHeader/LoadDefectData',
+							method: 'get',
+							params: that.fectVal,
+							success: function(res) {
+								that.badColumns = JSON.parse(res.Result)
+								that.fectValtotal = res.TotalCount
+							},
+							error: function() {
+
+							}
+						})
+					},
+					SelectDefect() {
+						var that = this
+						http({
+							url: 'MesSpotcheckHeader/SelectDefectIndex',
+							method: 'get',
+							params: {
+								
+							},
+							success: function(res) {
+								const data = res.Result
+								that.TypeList = data.TypeList
+								that.ClassList = data.ClassList
+								that.CategoryList = data.CategoryList
+								that.LevelList = data.LevelList
+								// that.TypeList.map(function(item){
+								// 	that.badColumns[0].values.push(item.CHINESE)
+								// })
+								// that.ClassList.map(function(item){
+								// 	that.badColumns[1].values.push(item.CHINESE)
+								// })
+								// that.CategoryList.map(function(item){
+								// 	that.badColumns[2].values.push(item.CHINESE)
+								// })
+								// that.LevelList.map(function(item){
+								// 	that.badColumns[3].values.push(item.CHINESE)
+								// })
+							},
+							error: function() {
+						
+							}
+						})
+					},
+					getList: function(isPullFresh) {
+						var that = this
+						that.listLoading = true
+						http({
+							url: 'MesSpotcheckHeader/LoadData',
+							method: 'get',
+							params: that.listQuery,
+							success: function(res) {
+								that.listLoading = false
+								if (isPullFresh) {
+									mui('#app').pullRefresh().endPulldown()
+								}
+								if (res.Result) {
+									var data = JSON.parse(res.Result || [])
+									that.total = res.TotalCount
+									that.mainData = data
+								}
+							},
+							error: function() {
+								that.listLoading = false
+								if (isPullFresh) {
+									mui('#app').pullRefresh().endPulldown()
+								}
+							}
+						})
+					},
+					// 删除
+					remove_but: function(dataItem) {
+						var that = this
+						plus.nativeUI.confirm('确认要删除？', function(e) {
+							if (e.index === 0) {
+								http({
+									url: 'MesSpotcheckHeader/DeleteOneById',
+									params: {
+										id: dataItem.BATCH_NO
+									},
+									method: 'get',
+									success: function(res) {
+										if (res.Result) {
+											plus.nativeUI.alert('删除成功', function() {
+
+											}, '成功')
+											tips('success')
+											that.getList()
+										} else {
+											plus.nativeUI.toast('删除失败', function() {
+
+											}, '失败')
+											tips('error')
+										}
+									}
+								})
+							}
+						}, "确认", ["确定", "取消"])
+					},
+					searchByWONO: function() {
+						var that = this
+						clearTimeout(that.timer)
+						that.timer = setTimeout(function() {
+							that.getList()
+						}, 1000)
+					},
+					// 搜索
+					searchClick: function() {
+						this.listQuery.Page = 1
+						this.conditions = {
+							U_LINE_DESC: this.listQueryDesc.U_LINE_DESC,
+							RESULT_DESC: this.listQueryDesc.RESULT_DESC,
+							STATUS_DESC: this.listQuery.STATUS == '0' ? '初始' : this.listQuery.STATUS == '3' ? '已审核' : ''
+						}
+						this.drawer = false
+						this.getList()
+					},
+					// 添加
+					add_but: function(dataItem) {
+						var webview = plus.webview.getWebviewById('oqaModify')
+						if (webview) {
+							mui.fire(webview, 'refresh')
+							webview.show()
+						} else {
+							href('/pages/OQA/modify.html', 'oqaModify')
+						}
+					},
+					// 编辑
+					edit_but: function(dataItem) {
+						// if (this.tableval.length === 0) {
+						// 	plus.nativeUI.toast('请选择编辑数据行')
+						// 	tips('error')
+						// 	return false
+						// }
+						var webview = plus.webview.getWebviewById('oqaModify')
+						if (webview) {
+							mui.fire(webview, 'refresh', dataItem)
+							webview.show()
+						} else {
+							href('/pages/OQA/modify.html', 'oqaModify', dataItem)
+						}
+					},
+					// 审核
+					review_but: function(dataItem) {
+						var that = this
+						plus.nativeUI.confirm('是否提交审核？', function(e) {
+							if (e.index === 0) {
+								http({
+									url: 'MesSpotcheckHeader/AuditSpotCheck',
+									method: 'post',
+									params: dataItem,
+									success: function(res) {
+										if (res.Result) {
+											plus.nativeUI.alert('审核成功', function() {}, '成功')
+											tips('success')
+											that.getList()
+										} else {
+											plus.nativeUI.alert('审核失败', function() {}, '失败')
+										}
+									}
+								})
+							}
+						}, "确认", ["确定", "取消"])
+					},
+					check_but(dataItem) {
+						this.checkFormData.BATCH_NO = dataItem.BATCH_NO
+						this.showCheckFormPicker = true
+					},
+					// 拒绝
+					refuse_but: function(dataItem) {
+						var that = this
+						plus.nativeUI.confirm('确定要拒绝吗？', function(e) {
+							if (e.index === 0) {
+								that.checkBill.ID = dataItem.ID
+								that.checkBill.Operator = that.userinfo.USER_NAME
+								http({
+									url: 'MesSpotcheckHeader/RejectBill',
+									method: 'post',
+									params: that.checkBill,
+									success: function(res) {
+										if (res.Result) {
+											plus.nativeUI.alert('拒绝成功', function() {}, '成功')
+											tips('success')
+											that.getList()
+										} else {
+											plus.nativeUI.alert('拒绝失败', function() {}, '失败')
+										}
+									}
+								})
+							}
+						}, "确认", ["确定", "取消"])
+					},
+					handleSizeChange: function(val) {
+						this.listQuery.Limit = val
+						this.getList()
+					},
+					handleCurrentChange: function(val) {
+						this.listQuery.Page = val
+						this.getList()
+					},
+					dealProductionTime: function(date) {
+						// console.log(date)
+						// this.value2 = this.dateFormat('YY-mm-dd', date)
+						this.value2 = date
+						this.showProductionTimePicker = false
+					},
+					dateFormat: function(fmt, date) {
+						let ret;
+						const opt = {
+							"Y+": date.getFullYear().toString(), // 年
+							"m+": (date.getMonth() + 1).toString(), // 月
+							"d+": date.getDate().toString(), // 日
+							"H+": date.getHours().toString(), // 时
+							"M+": date.getMinutes().toString(), // 分
+							"S+": date.getSeconds().toString() // 秒
+							// 有其他格式化字符需求可以继续添加，必须转化成字符串
+						};
+						for (let k in opt) {
+							ret = new RegExp("(" + k + ")").exec(fmt);
+							if (ret) {
+								fmt = fmt.replace(ret[1], (ret[1].length == 1) ? (opt[k]) : (opt[k].padStart(ret[1].length, "0")))
+							};
+						};
+						return fmt;
+					},
+					//格式化日期
+					formatter: function(day) {
+						return day
+					},
+
+					dealLinePicker: function(dataItem) {
+						this.listQuery.LINE_ID = dataItem.ID
+						this.listQueryDesc.U_LINE_DESC = dataItem.LINE_NAME
+						this.showLinePicker = false
+					},
+					dealResultPicker: function(dataItem) {
+						this.listQuery.RESULT = dataItem.value
+						this.listQueryDesc.RESULT_DESC = dataItem.desc
+						this.showResultPicker = false
+					},
+					resetFilter(key) {
+						switch (key) {
+							case 'line':
+								this.listQuery.LINE_ID = 0
+								this.listQueryDesc.U_LINE_DESC = ''
+								this.conditions.U_LINE_DESC = ''
+								break
+							case 'status':
+								this.listQuery.STATUS = -1
+								this.conditions.STATUS_DESC = ''
+								break
+							case 'result':
+								this.listQuery.RESULT = -1
+								this.listQueryDesc.RESULT_DESC = ''
+								this.conditions.RESULT_DESC = ''
+								break
+							default:
+								break
+
+						}
+						this.listQuery.Page = 1
+						this.getList()
+					}
+				},
+				created: function() {
+
+				},
+				mounted: function() {
+
+				}
+			})
+			mui.plusReady(function() {
+				app.computedTableHeight()
+				app.getSelelist()
+				app.getLoadDefectData()
+				app.SelectDefect()
+			})
+			document.addEventListener('refresh', function(e) {
+				app.computedTableHeight()
+				app.getSelelist()
+				app.getLoadDefectData()
+				app.SelectDefect()
+			})
+		</script>
+	</body>
+</html>

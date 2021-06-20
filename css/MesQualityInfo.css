@@ -1,0 +1,62 @@
+.MesQualityInfo .hideradio .el-radio__label {
+  display: none;
+}
+.MesQualityInfo-dialog .el-dialog__body {
+  padding: 10px 20px;
+  padding-bottom: 15px;
+}
+.MesQualityInfo-dialog-title {
+  background-color: #3e9ce2;
+  width: 70px;
+  height: 30px;
+  text-align: center;
+  line-height: 30px;
+  color: #fff;
+  margin-bottom: 10px;
+}
+.MesQualityInfo-dialog-area label {
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+.MesQualityInfo-dialog-area label span {
+  width: 115px;
+}
+.MesQualityInfo-dialog-button {
+  margin-top: 10px;
+  color: #fff;
+  text-align: center;
+}
+/* 隐藏单选文字 */
+.MesQualityInfo-table-dev .el-radio__label {
+  display: none;
+}
+.bad-table .el-radio__label {
+  display: none;
+}
+.MesQualityInfo-table-dev {
+  height: calc(100vh - 465px);
+}
+.MesQualityInfo-tabs .el-tabs__header {
+  margin: 0;
+}
+.chilDtable {
+  height: calc(100vh - 590px);
+}
+.MesQualityInfo .header-container {
+  padding-bottom: 10px;
+}
+.check-table {
+  // height: calc(100vh - 465px);
+  // height: 365px;
+}
+.check-switch .el-switch__core {
+  width: 70px !important;
+}
+.check-switch .el-switch__label * {
+  font-size: 12px !important;
+}
+.vxe-table .vxe-table--empty-content {
+  display: none !important;
+}

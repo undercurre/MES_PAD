@@ -1,0 +1,92 @@
+.page-login {
+	background-color: #F0F2F5;
+	background: line-gradient(to bottom right, #f7f7f7, #e0e0e0);
+	height: 100%;
+	position: relative;
+	user-select: none;
+	cursor: pointer;
+}
+
+.page-background {
+	background-image: url(../images/login.back.jpg);
+	background-size: cover;
+	background-repeat: no-repeat;
+	-webkit-filter: blur(5px);
+	-moz-filter: blur(5px);
+	-o-filter: blur(5px);
+	-ms-filter: blur(5px);
+	filter: blur(5px);
+	overflow: hidden;
+	position: fixed;
+	width: 100%;
+	height: 100%;
+}
+
+.page-login .page-login--layer {
+	overflow: hidden;
+	position: absolute;
+	top: 0px;
+	right: 0px;
+	bottom: 0px;
+	left: 0px;
+}
+
+.page-login .page-login--layer-time {
+	font-size: 3em;
+	font-weight: bold;
+	color: #e0e0e0;
+	overflow: hidden;
+	position: fixed;
+	top: 0px;
+	right: 0px;
+	bottom: 0px;
+	left: 0px;
+	display: flex;
+	justify-content: center;
+	/* padding-top: 100px; */
+
+	padding-bottom: 100px;
+	align-items: flex-end;
+}
+
+.page-login .page-login--content-header {
+	padding: 1em 0;
+	display: flex;
+	justify-content: center;
+}
+
+.page-login--content-main {
+	position: fixed;
+	height: 100%;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.page-login--logo {
+	margin-bottom: 2em;
+	margin-top: -2em;
+	display: block;
+}
+
+.login-form-card {
+	background: none;
+	border-radius: 12px;
+}
+
+.el-input__inner {
+	margin-bottom: 0 !important;
+}
+
+.button-login {
+	width: 100%;
+}
+.el-input__prefix{
+	font-size: 20px;
+}

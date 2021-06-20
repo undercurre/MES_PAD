@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<script src="../../js/qs.js"></script>
+		<!-- 引入vue -->
+		<script src="../../js/vue.min.js"></script>
+		<script src="../../js/common.js"></script>
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../../css/elementUi.min.css">
+		<!-- 引入组件库 -->
+		<script src="../../js/elementUi.min.js"></script>
+		<script src="../../js/mui.min.js"></script>
+		<link href="../../css/mui.min.css" rel="stylesheet" />
+		<script src="../../js/utils.js"></script>
+		<link rel="stylesheet" href="../../css/MesProductionPreMst.css">
+		<link rel="stylesheet" href="../../css/MesQualityInfo.css">
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../../css/vxe-table-2.9.5.min.css">
+		<!-- 引入脚本 -->
+		<script src="../../js/xe-utils.min.js"></script>
+		<script src="../../js/vxe-table-2.9.5.min.js"></script>
+		<script src="../../js/es5-shim.min.js"></script>
+		<script src="../../js/promise-6.1.0.js"></script>
+		<script src="../../js/fastclick.js"></script>
+		<style>
+			/** 全局 dialog header 样式  */
+			.el-dialog__header {
+			  background: rgb(236, 241, 246);
+			}
+			.el-dialog__header .el-dialog__title {
+			  color: #606266;
+			}
+			.el-dialog__body {
+				padding: 10px 20px;
+			}
+			.custom-dialog .el-dialog {
+				margin-top: 5vh!important;
+				margin: 0 auto 0;
+			}
+			.custom-dialog-x .el-dialog {
+				margin-top: 3vh!important;
+				margin: 0 auto 0;
+			}
+			.showRdio .el-radio__label {
+				display: inline;
+			}
+		</style>
+		<script>
+			if('addEventListener' in document) {
+			     document.addEventListener('DOMContentLoaded',function() {
+			     FastClick.attach(document.body);
+			   },false);
+			}
+		</script>
+	</head>
+	<body>
+		<div class="page" id="app" v-cloak>
+			<div class="custom-container-full">
+				<div class="custom-container-full__header" ref="header">
+					<div>
+						<div class="custom-container-header">
+							<div class="transform-cx">
+								<div class="cch-block">
+									<el-button icon="el-icon-back" @tap.native="goBack" size="small" style="margin-right: 10px;">返回</el-button>
+									<el-input v-model="listQuery.BATCH_NO" placeholder="请输入批号(工单号)" @tap.enter.native="search_but" style="width:150px"
+									 size="small"></el-input>
+									<el-button type="primary" icon="el-icon-search" @tap.native="search_but" size="small">搜索</el-button>
+									<el-button type="warning" icon="el-icon-finished" @click="drawer = true" size="small">筛选</el-button>
+									<el-button type="success" icon="el-icon-plus" @tap.native="add_but" size="small">新增</el-button>
+									<el-button type="warning" icon="el-icon-check" @tap.native="reviewClick" size="small">审核</el-button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="custom-container-full__body" ref="body">
+					<div class="out-table-container" :style="{
+						height: tableHeight
+					}">
+						<vxe-table ref="xTable" border resizable height="100%" size="medium" align="center" highlight-hover-row
+						 highlight-current-row show-overflow auto-resize keep-source stripe :loading="Loading" :data="mainTable"
+						 :radio-config="{labelField: 'name', trigger: 'row'}" @radio-change="openDetails">
+							<vxe-table-column type="radio" width="60" fixed="left"></vxe-table-column>
+							<vxe-table-column type="seq" title="序号" width="60"></vxe-table-column>
+							<vxe-table-column field="CREATE_TIME" min-width="180" title="创建日期"></vxe-table-column>
+							<vxe-table-column field="CHECK_TYPE_NAME" min-width="180" title="校验类别"></vxe-table-column>
+							<vxe-table-column field="LINE_NAME" min-width="180" title="线别"></vxe-table-column>
+							<vxe-table-column field="PRODUCT_DATE" min-width="140" title="生产日期">
+								<template slot-scope="scope">{{
+							            scope.row.PRODUCT_DATE.split(" ")[0]
+							          }}</template>
+							</vxe-table-column>
+							<vxe-table-column field="FIRST_ITEM_TYPE" :formatter="handleFormatterFirstItemType" min-width="140" title="首件类型"></vxe-table-column>
+							<vxe-table-column field="EP_STATUS" :formatter="handleFormatterEpStatus" min-width="140" title="环保状态"></vxe-table-column>
+							<vxe-table-column field="STATUS" min-width="140" title="状态">
+								<template slot-scope="scope">
+									<span v-if="scope.row.STATUS == 0" style="font-weight:800;color:orange">未审核</span>
+									<span v-if="scope.row.STATUS == 1" style="font-weight:800;color:blue">已审核</span>
+									<span v-else></span>
+								</template>
+							</vxe-table-column>
+							<vxe-table-column field="BATCH_NO" min-width="180" title="批号"></vxe-table-column>
+							<vxe-table-column field="PCB_SIDE" min-width="100" title="板型">
+								<template slot-scope="scope">
+									<span style="color: black" v-if="scope.row.PCB_SIDE == 0"></span>
+									<span style="color: black" v-else-if="scope.row.PCB_SIDE == 1">
+										板面
+									</span>
+									<span style="color: black" v-else-if="scope.row.PCB_SIDE == 2">
+										板底
+									</span>
+									<span style="color: black" v-else-if="scope.row.PCB_SIDE == 3">
+										板底+板面
+									</span>
+									<span v-else></span>
+								</template>
+							</vxe-table-column>
+							<vxe-table-column field="PART_NO" min-width="180" title="料号"></vxe-table-column>
+							<vxe-table-column field="PART_NAME" min-width="130" title="物料名称"></vxe-table-column>
+							<vxe-table-column field="PART_DESC" min-width="200" title="物料规格"></vxe-table-column>
+							<vxe-table-column field="BATCH_QTY" min-width="90" title="批量"></vxe-table-column>
+
+							<vxe-table-column field="WORK_CLASS" min-width="100" title="班别">
+								<template slot-scope="scope">
+									<span v-if="scope.row.WORK_CLASS == 1" style="color: black">白班</span>
+									<span style="color: black" v-else-if="scope.row.WORK_CLASS == 2">夜班</span>
+									<span v-else></span>
+								</template>
+							</vxe-table-column>
+							<vxe-table-column field="WORK_SHIFTS" min-width="100" title="班次">
+								<template slot-scope="scope">
+									<span v-if="scope.row.WORK_SHIFTS == 1" style="color: black">A班</span>
+									<span style="color: black" v-else-if="scope.row.WORK_SHIFTS == 2">B班</span>
+									<span v-else></span>
+								</template>
+							</vxe-table-column>
+
+							<vxe-table-column field="RESULT_REMARK" min-width="180" title="校验备注"></vxe-table-column>
+
+							<vxe-table-column field="UPDATE_USER" min-width="160" title="最后更新人"></vxe-table-column>
+							<vxe-table-column field="UPDATE_TIME" min-width="180" title="最后更新时间"></vxe-table-column>
+							<vxe-table-column field="AUDIT_USER" min-width="140" title="审核人"></vxe-table-column>
+							<vxe-table-column field="AUDIT_TIME" min-width="180" title="审核时间"></vxe-table-column>
+							<vxe-table-column field="CREATE_USER" min-width="140" title="创建人"></vxe-table-column>
+
+							<vxe-table-column field="RESULT_STATUS" min-width="100" title="结果" fixed="right">
+								<template slot-scope="scope">
+									<span v-if="scope.row.RESULT_STATUS == 0" style="font-weight:800;color:orange">未判定</span>
+									<span v-if="scope.row.RESULT_STATUS == 1" style="font-weight:800;color:green">合格</span>
+									<span v-if="scope.row.RESULT_STATUS == 2" style="font-weight:800;color:red">不合格</span>
+								</template>
+							</vxe-table-column>
+							<vxe-table-column title="操作" width="250" align="center" fixed="right">
+								<template v-slot="scoped">
+									<el-button type="primary" @tap.native="edit_but(scoped.row)" size="small">编辑</el-button>
+									<el-button type="danger" @tap.native="remove_but(scoped.row)" size="small">删除</el-button>
+									<el-button type="success" @tap.native="Spotcheck_but(scoped.row)" size="small">检验情况</el-button>
+								</template>
+							</vxe-table-column>
+						</vxe-table>
+					</div>
+					<div style="padding: 5px 0;">
+						<el-pagination :current-page="listQuery.Page" :page-size="listQuery.Limit" :page-sizes="[15, 25, 35, 45]" layout="total, sizes, prev, pager, next, jumper"
+						 :total="totalPage" @size-change="handleSizeChange" @current-change="handleCurrentChange" />
+					</div>
+					<!-- next table -->
+
+					<el-tabs style="height: 300px;overflow-y: hidden;" v-model="TorikoName" @tab-click="ChiltabsClick" class="MesQualityInfo-tabs">
+						<el-tab-pane label="检查项目" class="chilDtable" name="Examination">
+							<vxe-table border empty-text="没有更多数据了！" resizable height="300" size="medium" align="center" highlight-hover-row
+							 highlight-current-row show-overflow auto-resize keep-source stripe :loading="childLoading" :data="childTable">
+								<vxe-table-column type="seq" title="序号" width="60"></vxe-table-column>
+								<vxe-table-column field="CHECK_ITEM" min-width="180" title="检验项目"></vxe-table-column>
+								<vxe-table-column field="CHECK_DESC" min-width="150" title="检验描述"></vxe-table-column>
+								<vxe-table-column field="QUANTIZE_TYPE" min-width="150" title="有无量化标准">
+									<template slot-scope="scope">
+										<span v-if="scope.row.QUANTIZE_TYPE == '1'" style="color: blue">有量化标准</span>
+										<span v-else style="color: green">无量化标准</span>
+									</template>
+								</vxe-table-column>
+								<vxe-table-column field="ISEMPTY" min-width="150" title="是否可空">
+									<template slot-scope="scope">
+										<span v-if="scope.row.ISEMPTY == 'Y'" style="color: green">可空</span>
+										<span v-else style="color: blue">不可空</span>
+									</template>
+								</vxe-table-column>
+								<vxe-table-column field="RESULT_VALUE" min-width="150" title="检验结果值">
+									<template slot-scope="scope">
+										<div v-if="scope.row.QUANTIZE_TYPE == '1'">
+											<span style="color: blue">{{
+										       scope.row.RESULT_VALUE ? scope.row.RESULT_VALUE : ""
+										     }}</span>
+										</div>
+										<div v-else>
+											<span style="color: green" v-if="scope.row.RESULT_VALUE == 'Y'">合格</span>
+											<span style="color: red" v-else>不合格</span>
+										</div>
+									</template>
+								</vxe-table-column>
+								<vxe-table-column field="RESULT_TYPE" fixed="right" min-width="100" title="检查结果">
+									<template slot-scope="scope">
+										<span style="color: green" v-if="scope.row.RESULT_TYPE == 'Y'">合格</span>
+										<span style="color: red" v-else>不合格</span>
+									</template>
+								</vxe-table-column>
+
+							</vxe-table>
+
+
+						</el-tab-pane>
+						<el-tab-pane label="物料确认" class="chilDtable" name="Materials">
+							<vxe-table border empty-text="没有更多数据了！" resizable height="300" size="medium" align="center" highlight-hover-row
+							 highlight-current-row show-overflow auto-resize keep-source stripe :data="MaterialsTable">
+								<vxe-table-column type="seq" title="序号" width="60"></vxe-table-column>
+								<vxe-table-column field="PART_NO" title="物料料号" min-width="180"></vxe-table-column>
+								<vxe-table-column field="POSITION" title="位号" min-width="180"></vxe-table-column>
+								<vxe-table-column field="PART_NAME" title="物料名称" min-width="180"></vxe-table-column>
+								<vxe-table-column field="PART_DESC" title="物料规格" min-width="180"></vxe-table-column>
+								<vxe-table-column field="TEST_VALUE" title="测试值" min-width="180"></vxe-table-column>
+								<vxe-table-column field="BRAND_NAME" title="品牌" min-width="180"></vxe-table-column>
+								<vxe-table-column field="TENSION_VALUE" title="拉力值" min-width="180"></vxe-table-column>
+								<vxe-table-column field="RESULT" fixed="right" title="检查结果" min-width="100">
+									<template slot-scope="scope">
+										<span style="color: green" v-if="scope.row.RESULT == 'Y'">合格</span>
+										<span style="color: red" v-else>不合格</span>
+									</template>
+								</vxe-table-column>
+							</vxe-table>
+						</el-tab-pane>
+
+					</el-tabs>
+				</div>
+				<!-- 主表添加、编辑 -->
+				<el-dialog v-dialogDrag width="90%" :title="addorediText" :visible.sync="innerVisible" append-to-body class="MesQualityInfo-dialog"
+				 :close-on-click-modal="false">
+					<el-form ref="form" :show-message="false" :model="form" :rules="rules" label-width="90px" class="MesQualityInfo-form">
+						<el-row :gutter="2">
+							<el-col :span="12">
+								<el-form-item label="检验类别" prop="CHECK_TYPE">
+									<el-select v-model="form.CHECK_TYPE" style="width: 100%" placeholder="请输入检验类别">
+										<el-option v-for="item in SfcsParameters" :key="item.LOOKUP_CODE" :label="item.MEANING" :value="item.LOOKUP_CODE" />
+									</el-select>
+								</el-form-item>
+								<el-form-item :label="'环保类型'" prop="EP_STATUS">
+									<el-select v-model="form.EP_STATUS" clearable filterable style="width: 100%">
+										<el-option v-for="(item, index) in FirstEPStatusList" :key="index" :label="item.CHINESE" :value="item.LOOKUP_CODE" />
+									</el-select>
+								</el-form-item>
+								<el-form-item label="批量" prop="BATCH_QTY">
+									<el-input v-model="form.BATCH_QTY" disabled placeholder="请输入批量数" />
+								</el-form-item>
+								<el-form-item label="品名" prop="PART_NAME">
+									<el-input v-model="form.PART_NAME" disabled placeholder="品名(自动带出)" />
+								</el-form-item>
+								<el-form-item label="生产日期" prop="PRODUCT_DATE">
+									<el-date-picker v-model="form.PRODUCT_DATE" style="width: 100%" type="date" disabled value-format="yyyy-MM-dd"
+									 placeholder="请选择生产日期"></el-date-picker>
+								</el-form-item>
+								<el-form-item label="班次" prop="WORK_SHIFTS">
+									<el-select v-model="form.WORK_SHIFTS" placeholder="请选择班次" class="filter-item" style="width: 100%">
+										<el-option value="1" label="A班" />
+										<el-option value="2" label="B班" />
+									</el-select>
+								</el-form-item>
+								<el-form-item label="首件类型" prop="FIRST_ITEM_TYPE">
+									<el-select v-model="form.FIRST_ITEM_TYPE" clearable filterable placeholder="请选择首件类型" pl style="width: 100%">
+										<el-option v-for="(item, index) in FirstItemTypeList" :key="index" :label="item.CHINESE" :value="item.LOOKUP_CODE" />
+									</el-select>
+								</el-form-item>
+							</el-col>
+							<el-col :span="12">
+								<el-form-item label="线体" prop="LINE_ID">
+									<el-select v-model="form.LINE_ID" placeholder="请选择线体" class="filter-item" style="width: 100%" @change="getInfo">
+										<el-option v-for="(item, index) in AllLinesModel" :key="index" :label="item.LINE_NAME" :value="item.LINE_ID" />
+									</el-select>
+								</el-form-item>
+								<el-form-item label="批号" prop="BATCH_NO">
+									<el-input v-model="form.BATCH_NO" disabled placeholder="批号(自动带出)" />
+								</el-form-item>
+								<el-form-item label="料号" prop="PART_NO">
+									<el-input v-model="form.PART_NO" disabled placeholder="料号(自动带出)" />
+								</el-form-item>
+								<el-form-item label="规格" prop="PART_DESC">
+									<el-input v-model="form.PART_DESC" disabled placeholder="规格(自动带出)" />
+								</el-form-item>
+								<el-form-item label="班别" prop="WORK_CLASS">
+									<el-select v-model="form.WORK_CLASS" placeholder="请选择班别" class="filter-item" style="width: 100%">
+										<el-option value="1" label="白班" />
+										<el-option value="2" label="夜班" />
+									</el-select>
+								</el-form-item>
+								<el-form-item label="板型" prop="PCB_SIDE">
+									<el-select v-model="form.PCB_SIDE" placeholder="请选择板型" style="width: 100%">
+										<el-option v-for="(item, index) in SmtLookupList" :key="index" :label="item.MEANING" :value="item.LOOKUP_CODE" />
+									</el-select>
+								</el-form-item>
+							</el-col>
+						</el-row>
+						<div class="MesQualityInfo-dialog-button">
+							<el-button type="success" @click="shout_but('form')">&nbsp;确定&nbsp;</el-button>
+							<el-button @click="reset_but">&nbsp;重置&nbsp;</el-button>
+						</div>
+					</el-form>
+				</el-dialog>
+				<!-- 抽屉 筛选 -->
+				<el-drawer title="高级筛选" :visible.sync="drawer" direction="ltr">
+					<div style="padding: 0 20px">
+						<el-card class="box-card">
+							<div slot="header" class="clearfix">
+								<span>搜索</span>
+								<el-button style="float: right; padding: 3px 0" type="text" @click="search_but">确定</el-button>
+								<el-button style="float: right; padding: 3px 0; margin-right: 20px" type="text" @click="resetListQuery">重置</el-button>
+							</div>
+
+							<el-form class="custom-form" ref="searchVal" label-position="top" label-width="80px" :model="listQuery" size="mini">
+								<el-form-item :label="'检验类别'">
+									<el-select v-model="listQuery.CHECK_TYPE" style="width: 100%" :placeholder="''">
+										<el-option v-for="(item, index) in SfcsParameters" :key="index" :label="item.MEANING" :value="item.LOOKUP_CODE" />
+									</el-select>
+								</el-form-item>
+								<el-form-item :label="'线别'">
+									<el-select v-model="listQuery.LINE_ID" :placeholder="''" class="filter-item" style="width: 100%">
+										<el-option v-for="(item, index) in AllLinesModel" :key="index" :label="item.LINE_NAME" :value="item.LINE_ID" />
+									</el-select>
+								</el-form-item>
+								<el-form-item :label="'首件类型'">
+									<el-select v-model="listQuery.FIRST_ITEM_TYPE" style="width: 100%" clearable filterable placeholder="">
+										<el-option :value="0" :label="'每班首件'"></el-option>
+										<el-option :value="1" :label="'新机型试产'"></el-option>
+										<el-option :value="2" :label="'转线'"></el-option>
+										<el-option :value="3" :label="'物料变更'"></el-option>
+										<el-option :value="4" :label="'程序变更'"></el-option>
+										<el-option :value="5" :label="'设计变更'"></el-option>
+										<el-option :value="6" :label="'重大工艺变更'"></el-option>
+										<el-option :value="7" :label="'返工'"></el-option>
+									</el-select>
+								</el-form-item>
+								<el-form-item :label="'环保类型'">
+									<el-select v-model="listQuery.EP_STATUS" style="width: 100%" clearable filterable placeholder="">
+										<el-option :value="0" :label="'ROHS'"></el-option>
+										<el-option :value="1" :label="'HF'"></el-option>
+									</el-select>
+								</el-form-item>
+								<el-form-item :label="'状态'">
+									<el-select v-model="listQuery.STATUS" :placeholder="''" class="filter-item" style="width: 100%">
+										<el-option value="0" label="未审核"></el-option>
+										<el-option value="1" label="已审核"></el-option>
+									</el-select>&nbsp;
+								</el-form-item>
+
+								<el-form-item :label="'结果'">
+									<el-select v-model="listQuery.RESULT_STATUS" :placeholder="''" class="filter-item" style="width: 100%">
+										<el-option value="0" label="未判定"></el-option>
+										<el-option value="1" label="合格"></el-option>
+										<el-option value="2" label="不合格"></el-option>
+									</el-select>&nbsp;
+								</el-form-item>
+								<el-form-item :label="'生产日期'">
+									<el-date-picker v-model="Day" clearable type="daterange" style="width: 100%; margin-right: 10px"
+									 start-placeholder="开始时间" end-placeholder="结束时间" align="right" value-format="yyyy-MM-dd" />
+								</el-form-item>
+							</el-form>
+						</el-card>
+					</div>
+				</el-drawer>
+
+			</div>
+		</div>
+		<script>
+			var vm = new Vue({
+				el: '#app',
+				data() {
+					return {
+						tableHeight: '350px',
+						SfcsParameters: [],
+						AllLinesModel: [],
+						SfcsDepartment: [],
+						SmtLookupList: [],
+						FirstItemTypeList: [],
+						FirstEPStatusList: [],
+						Loading: false,
+						childLoading: false,
+						addorediText: '',
+						listQuery: {
+							Page: 1,
+							Limit: 15,
+							BATCH_NO: '', // 批号(工单号)
+							CHECK_TYPE: '', // 全部检验类别
+							LINE_ID: '', // 全部线别
+							DEPARTMENT: '', // 全部部门
+							STATUS: '', // 全部状态
+							RESULT_STATUS: '', // 全部结果
+							BEGIN_TIME: '',
+							END_TIME: ''
+						},
+						Day: '',
+						mainSTATUS: 0,
+						totalPage: 0, // 总页
+						radio: '',
+						Categ: [],
+						mainTable: [],
+						childTable: [],
+						// 主表编辑
+						innerVisible: false,
+						form: {
+							ID: 0,
+							CHECK_TYPE: '', // 检验类别
+							LINE_ID: '', // 线体
+							DEPARTMENT: 0, // 部门
+							BATCH_NO: '', // 批号
+							BATCH_QTY: 0, // 批量
+							PART_NO: '', // 料号
+							PART_NAME: '', // 品名
+							PART_DESC: '', // 规格
+							PRODUCT_DATE: '0001-1-1', // 生产日期
+							WORK_CLASS: '', // 班别
+							WORK_SHIFTS: '', // 班次
+							PCB_SIDE: '', // 板型
+							ORGANIZE_ID: 0,
+							CREATE_USER: '',
+							AUDIT_USER: '',
+							UPDATE_USER: ''
+						},
+						rules: {
+							CHECK_TYPE: [{
+								required: true,
+								message: '请选择检验类别',
+								trigger: 'change'
+							}],
+							DEPARTMENT: [{
+								required: true,
+								message: '请选择部门',
+								trigger: 'change'
+							}],
+							LINE_ID: [{
+								required: true,
+								message: '请选择线别',
+								trigger: 'change'
+							}],
+							WORK_CLASS: [{
+								required: true,
+								message: '请选择班别',
+								trigger: 'change'
+							}],
+							WORK_SHIFTS: [{
+								required: true,
+								message: '请选择班次',
+								trigger: 'change'
+							}],
+							PCB_SIDE: [{
+								required: true,
+								message: '品名(自动带出)',
+								trigger: 'change'
+							}],
+							ORGANIZE_ID: [{
+								required: true,
+								message: '请选择组织架构',
+								trigger: 'change'
+							}]
+						},
+						// 审核
+						reviewForm: null,
+						// 组织架构
+						organizeList: [],
+						planData: [],
+						casProps: {
+							label: 'ORGANIZE_NAME',
+							value: 'ID',
+							children: 'children',
+							checkStrictly: true
+						},
+						drawer: false,
+						TorikoName: 'Examination',
+						MaterialsTable: [],
+						defaultExpandKeys: []
+					}
+				},
+				computed: {
+					userinfo: function() {
+						var userinfo = window.localStorage.getItem('Userinfo')
+						userinfo = userinfo ? JSON.parse(userinfo) : {};
+						return userinfo
+					}
+				},
+				methods: {
+					goBack: function() {
+						mui.back()
+					},
+					getIndex: function(isPullFresh) {
+						var that = this
+						http({
+							url: 'MesQualityInfo/Index',
+							method: 'get',
+							params: {},
+							success: function(res) {
+								if (res.Result) {
+									that.SfcsParameters = res.Result.SfcsParameters
+									that.AllLinesModel = res.Result.AllLinesModel
+									that.SfcsDepartment = res.Result.SfcsDepartment
+									that.SmtLookupList = res.Result.SmtLookupList
+
+									that.FirstItemTypeList = res.Result.FirstItemTypeList
+									that.FirstEPStatusList = res.Result.FirstEPStatusList
+								}
+							}
+						})
+					},
+					getLoadData: function(isPullFresh) {
+						var that = this
+						that.Loading = true
+						http({
+							url: 'MesQualityInfo/LoadData',
+							method: 'get',
+							params: that.listQuery,
+							success: function(res) {
+								if (isPullFresh) {
+									mui('#app').pullRefresh().endPulldown()
+								}
+								that.Loading = false
+								that.mainTable = res.Result || []
+								that.totalPage = res.TotalCount || 0
+							},
+							error: function(error) {
+								if (isPullFresh) {
+									mui('#app').pullRefresh().endPulldown()
+								}
+								that.Loading = false
+							}
+						})
+					},
+					handleFormatterFirstItemType: function(cellValue) {
+
+						let {
+							row
+						} = cellValue
+						cellValue = row.FIRST_ITEM_TYPE
+						if (!cellValue && cellValue !== 0 && cellValue !== '0') return ''
+						const val = parseInt(cellValue)
+						if (val === 0) {
+							return '每班首件'
+						} else if (val === 1) {
+							return '新机型试产'
+						} else if (val === 2) {
+							return '转线'
+						} else if (val === 3) {
+							return '物料变更'
+						} else if (val === 4) {
+							return '程序变更'
+						} else if (val === 5) {
+							return '设计变更'
+						} else if (val === 6) {
+							return '重大工艺变更'
+						} else if (val === 7) {
+							return '返工'
+						} else {
+							return ''
+						}
+					},
+					handleFormatterEpStatus: function(cellValue) {
+						let {
+							row
+						} = cellValue
+						cellValue = row.EP_STATUS
+						if (!cellValue && cellValue !== 0 && cellValue !== '0') return ''
+						const val = parseInt(cellValue)
+						if (val === 0) {
+							return 'ROHS'
+						} else if (val === 1) {
+							return 'HF'
+						} else {
+							return ''
+						}
+					},
+					handleCurrentChange: function(Page) {
+						this.listQuery.Page = Page
+						this.getLoadData()
+					},
+					handleSizeChange: function(Limit) {
+						this.listQuery.Page = 1
+						this.listQuery.Limit = Limit
+						this.getLoadData()
+					},
+					computedTableHeight: function() {
+						var windowHeight = document.body.clientHeight || document.documentElement.clientHeight
+						this.tableHeight = (windowHeight - 54 - 20 - 42 - 200 - 100) + 'px'
+					},
+					search_but: function() {
+						this.drawer = false
+						if (this.Day[0]) {
+							this.listQuery.BEGIN_TIME = this.Day[0]
+							this.listQuery.END_TIME = this.Day[1]
+						} else {
+							this.listQuery.BEGIN_TIME = ''
+							this.listQuery.END_TIME = ''
+						}
+						this.listQuery.Page = 1
+						this.getLoadData()
+					},
+					resetListQuery: function() {
+						this.listQuery = {}
+						this.listQuery.Limit = 15
+						this.Day = ''
+						this.listQuery.BEGIN_TIME = ''
+						this.listQuery.END_TIME = ''
+					}, // 主表清空
+					Eliminate: function() {
+						this.form = {
+							ID: 0,
+							CHECK_TYPE: '', // 检验类别
+							LINE_ID: '', // 线体
+							DEPARTMENT: 0, // 部门
+							BATCH_NO: '', // 批号
+							BATCH_QTY: 0, // 批量
+							PART_NO: '', // 料号
+							PART_NAME: '', // 品名
+							PART_DESC: '', // 规格
+							PRODUCT_DATE: '0001-1-1', // 生产日期
+							WORK_CLASS: '', // 班别
+							WORK_SHIFTS: '', // 班次
+							PCB_SIDE: '', // 板型
+							ORGANIZE_ID: 0,
+							CREATE_USER: this.userinfo.USER_NAME,
+							AUDIT_USER: this.userinfo.USER_NAME,
+							UPDATE_USER: this.userinfo.USER_NAME
+						}
+					},
+					// 主表添加
+					add_but: function() {
+						this.Eliminate()
+						this.addorediText = '添加首件检验'
+						this.innerVisible = true
+					},
+					// 主表确定
+					    shout_but (formName) {
+							var that =this
+					      if (
+					        Object.prototype.toString.call(this.form.ORGANIZE_ID) ===
+					        '[object Array]'
+					      ) {
+					        this.form.ORGANIZE_ID = this.form.ORGANIZE_ID[this.form.ORGANIZE_ID.length - 1]
+					      }
+					
+					      this.$refs.form.validate(async (valid, errInfo) => {
+					        if (valid) {
+					          this.form.CREATE_USER = this.userinfo.USER_NAME
+					          this.form.AUDIT_USER = this.userinfo.USER_NAME
+					          this.form.UPDATE_USER = this.userinfo.USER_NAME
+					          const res = await AddOrModifyAsync(this.form)
+					          if (res.Result) {
+					            this.innerVisible = false
+					            this.getLoadData()()
+					            this.$notify({
+					              title: '成功',
+					              message: '提交成功',
+					              type: 'success',
+					              duration: 2000
+					            })
+					          }
+					        } else {
+					          console.log('errInfo: ', errInfo) // rules
+					          try {
+					            Object.keys(errInfo).forEach((item) => {
+					              this.$message.error(errInfo[item][0].message)
+					              throw new Error(new Date().toLocaleString())
+					            })
+					          } catch { }
+					        }
+					      })
+					    },
+					// 获取当前生产信息
+					getInfo: function(row) {
+						var that = this
+						http({
+							url: 'MesQualityInfo/GetProductionInfo',
+							method: 'get',
+							params: row,
+							success: function(res) {
+								if (res.Result) {
+									that.form.BATCH_NO = res.Result.BATCH_NO // 批号
+									that.form.PART_NO = res.Result.PART_NO // 料号
+									that.form.BATCH_QTY = res.Result.BATCH_QTY // 批量
+									that.form.PART_NAME = res.Result.PART_NAME // 品名
+									that.form.PART_DESC = res.Result.PART_DESC // 规格
+									that.form.PRODUCT_DATE = res.Result.PRODUCT_DATE // 生产日期
+								} else {
+									that.form.BATCH_NO = '' // 批号
+									that.form.PART_NO = '' // 料号
+									that.form.BATCH_QTY = 0 // 批量
+									that.form.PART_NAME = '' // 品名
+									that.form.PART_DESC = '' // 规格
+									that.form.PRODUCT_DATE = '0001-1-1' // 生产日期
+								}
+							},
+						})
+
+					},
+					ChiltabsClick: function() {
+						console.log(this.reviewForm, 'this.reviewForm')
+						if (this.reviewForm === null) {
+							return
+						}
+						if (this.TorikoName === 'Examination') {
+							this.getDatail(this.reviewForm.ID)
+						} else {
+							this.GetDetailBOM(this.reviewForm.ID)
+						}
+					},
+					// 获取物料确认
+					GetDetailBOM: function(id) {
+						var that = this
+						http({
+							url: 'MesQualityInfo/GetDetailBOMData',
+							method: 'get',
+							params: {
+								mst_id: id
+							},
+							success: function(res) {
+								if (res.Result) {
+									that.MaterialsTable = res.Result
+								}
+							},
+						})
+					},
+					openDetails: function(e) {
+						var row = e.row
+						this.mainSTATUS = row.STATUS
+						this.reviewForm = row
+						this.radio = this.mainTable.indexOf(row)
+						if (this.TorikoName === 'Examination') {
+							this.getDatail(row.ID)
+						} else {
+							this.GetDetailBOM(row.ID)
+						}
+
+					},
+					// 获取明细数据
+					getDatail: function(id) {
+						var that = this
+						that.childLoading = true
+						http({
+							url: 'MesQualityInfo/GetDetailItemData',
+							params: {
+								mst_id: id
+							},
+							method: 'get',
+							success: function(res) {
+								if (res.Result) {
+									that.childLoading = false
+									//var data = JSON.parse(res.Result)
+									that.childTable = res.Result
+								}
+							},
+							error: function(error) {
+								that.childLoading = false
+							}
+						})
+					},
+					// 审核
+					reviewClick: function() {
+						let that = this
+						if (this.reviewForm === null) {
+							this.$message({
+								showClose: true,
+								type: 'warning',
+								message: '请选择需要审核的数据！'
+							})
+							return
+						}
+						if (this.mainSTATUS !== 0) {
+							this.$message({
+								showClose: true,
+								type: 'warning',
+								message: '当前已审核状态，无法再审核！'
+							})
+							return
+						}
+						this.$confirm(
+								'当前检验结果为【' +
+								this.GetResultStatusStr(this.reviewForm.RESULT_STATUS) +
+								'】，确定审核【' +
+								this.reviewForm.BATCH_NO +
+								'】检验数据？',
+								'确定审核', {
+									type: 'warning'
+								}
+							)
+							.then(() => {
+								this.reviewForm.AuditUser = this.userinfo.USER_NAME
+
+								http({
+									url: 'MesQualityInfo/AuditData',
+									params: that.reviewForm,
+									method: 'post',
+									success: function(res) {
+										if (res.Result) {
+											that.$notify({
+												title: '成功',
+												message: '审核成功',
+												type: 'success',
+												duration: 2000
+											})
+											that.getLoadData()
+										}
+									},
+									error: function(error) {
+										that.getLoadData()
+									}
+								})
+
+
+							})
+							.catch(() => {})
+					},
+					GetResultStatusStr: function(status) {
+						switch (status) {
+							case 0:
+								return '未判定'
+							case 1:
+								return '合格'
+							case 2:
+								return '不合格'
+							default:
+								return ''
+						}
+					},
+					// 主表编辑
+					edit_but: function(row) {
+						if (row.STATUS !== 0) {
+							this.$message({
+								showClose: true,
+								type: 'warning',
+								message: '当前单据不是未审核状态，无法修改！'
+							})
+							return
+						}
+						let form = row
+						let stop = this.organizeList.map((item) => item.ID)
+						stop = stop.sort((current, next) => (current > next ? 1 : -1))
+						stop = stop[0] || 0
+						const O_ID = form.O_ID || form.ORGANIZE_ID
+						if (!O_ID) {
+							return false
+						}
+						form.ORGANIZE_ID = this.reverseGetTree(
+							this.planData,
+							O_ID && parseInt(O_ID),
+							stop
+						)
+						this.form = form
+						this.addorediText = '编辑'
+						this.innerVisible = true
+						this.getInfo(this.form.LINE_ID)
+					},
+					// 递归
+					reverseGetTree: function(data, id, stop) {
+						let arr = []
+						data.map((item) => {
+							if (item.ID === id) {
+								if (item.PARENT_ORGANIZE_ID && item.ID !== stop) {
+									arr.push(
+										...this.reverseGetTree(data, item.PARENT_ORGANIZE_ID, stop)
+									)
+								}
+								arr.push(item.ID)
+							}
+						})
+						return arr
+					},
+					// 主表删除
+					remove_but: function(row) {
+						var that = this
+						plus.nativeUI.confirm('确定删除当前选中的数据？', function(e) {
+							if (e.index === 0) {
+								http({
+									url: 'MesQualityInfo/DeleteOneById?id=' + row.ID,
+									method: 'post',
+									params: {},
+									success: function(res) {
+										if (res.Result) {
+											plus.nativeUI.alert('删除成功', function() {
+												this.getLoadData()
+												that.getDatail(row.ID)
+											}, '成功')
+
+										}
+									}
+								})
+							}
+						}, "确认", ["确定", "取消"])
+					},
+					// 主表重置
+					reset_but() {
+						this.form = {
+							CHECK_TYPE: '', // 检验类别
+							LINE_ID: '', // 线体
+							DEPARTMENT: 0, // 部门
+							BATCH_NO: '', // 批号
+							BATCH_QTY: 0, // 批量
+							PART_NO: '', // 料号
+							PART_NAME: '', // 品名
+							PART_DESC: '', // 规格
+							PRODUCT_DATE: '0001-1-1', // 生产日期
+							WORK_CLASS: '', // 班别
+							WORK_SHIFTS: '', // 班次
+							PCB_SIDE: '', // 板型
+							ORGANIZE_ID: 0
+						}
+					},
+					// 抽检记录
+					    async Spotcheck_but (row) {
+					      if (row.STATUS !== 0) {
+					        this.$message({
+					          showClose: true,
+					          type: 'warning',
+					          message: '当前单据不是未审核状态，无法添加检验明细！'
+					        })
+					        return
+					      }
+						  var webview = plus.webview.getWebviewById('MesQualityInfoModify')
+						  if (webview) {
+						  	mui.fire(webview, 'refresh', row)
+						  	webview.show()
+						  } else {
+						  	href('/pages/MesQualityInfo/modify.html', 'MesQualityInfoModify', row)
+						  }
+						 
+					    },
+				},
+				created: function() {
+
+				}
+			})
+
+			mui.plusReady(function() {
+				var _selfWebview = plus.webview.currentWebview()
+				vm.getIndex()
+				vm.getLoadData()
+				vm.computedTableHeight()
+			})
+			document.addEventListener('refresh', function(e) {
+				vm.getIndex()
+				vm.getLoadData()
+				vm.computedTableHeight()
+			})
+			// 扫码回调
+			function scaned(t, r, f) {
+				vm.$set(vm[vm.formName], vm.field, r)
+				if (vm.formName === 'form' && vm.field === 'WO_NO') {
+					vm.WorkOrder()
+				}
+			}
+		</script>
+	</body>
+</html>

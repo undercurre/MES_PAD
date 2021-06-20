@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<script src="../../js/qs.js"></script>
+		<!-- 引入vue -->
+		<script src="../../js/vue.min.js"></script>
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../../css/elementUi.min.css">
+		<link rel="stylesheet" href="../../css/vant.min.css" />
+		<script src="../../js/common.js"></script>
+		<!-- 引入组件库 -->
+		<script src="../../js/elementUi.min.js"></script>
+		<script src="../../js/vant.min.js"></script>
+		<script src="../../js/mui.min.js"></script>
+		<link href="../../css/mui.min.css" rel="stylesheet" />
+		<script src="../../js/utils.js"></script>
+		<link rel="stylesheet" href="../../css/MesProductionPreMst.css">
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../../css/vxe-table-2.9.5.min.css">
+		<!-- 引入脚本 -->
+		<script src="../../js/xe-utils.min.js"></script>
+		<script src="../../js/vxe-table-2.9.5.min.js"></script>
+		<script src="../../js/es5-shim.min.js"></script>
+		<script src="../../js/promise-6.1.0.js"></script>
+		<script src="../../js/fastclick.js"></script>
+		<style>
+			.el-radio__label {
+				display: inherit;
+			}
+		</style>
+		<script>
+			if('addEventListener' in document) {
+			     document.addEventListener('DOMContentLoaded',function() {
+			     FastClick.attach(document.body);
+			   },false);
+			}
+			
+		</script>
+	</head>
+	<body>
+		<div class="page" id="app">
+			<div class="custom-container-full" style="display: flex;flex-flow: column;">
+				<div class="custom-container-full__header" ref="header">
+					
+					<el-page-header @back="goBack" content="新增产前确认">
+					</el-page-header>
+				</div>
+				<div class="custom-container-full__body" ref="body" style="flex: 1;">
+					<div style="overflow-x: hidden;overflow-y: auto;">
+						<div class="block-one">
+							<el-form :show-message="false" :model="ruleForm" :rules="rules" ref="ruleForm" label-width="120px" size="mini">
+								
+								<el-row>
+									<el-col span="12">
+										<el-form-item label="线别" prop="LINE_ID">
+											<!-- <el-select v-model="ruleForm.LINE_ID" placeholder=" " style="width: 100%" filterable clearable>
+												<el-option v-for="item in linesList" :key="item.value" :value="item.value" :label="item.label"></el-option>
+											</el-select> -->
+											<el-input v-model="ruleForm.LINE_NAME" readonly clickable @click.native="showLinePicker=true" clearable></el-input>
+											<van-popup v-model="showLinePicker" round position="bottom">
+												<van-picker show-toolbar :columns="linesList" value-key="label" title="线别" item-height="40"
+												 visible-item-count="10" @cancel="showLinePicker = false" @confirm="dealLinePicker" />
+											</van-popup>
+										</el-form-item>
+									</el-col>
+									<el-col span="12">
+										<el-form-item label="产品名称" prop="PART_NAME">
+											<el-input v-model="ruleForm.PART_NAME" readonly></el-input>
+										</el-form-item>
+									</el-col>
+								</el-row>
+								<el-row>
+									<el-col span="12">
+										<el-form-item label="产线确认编号" prop="MST_NO">
+											<el-input v-model="ruleForm.MST_NO" readonly></el-input>
+										</el-form-item>
+									</el-col>
+									<el-col span="12">
+										<el-form-item label="工单号" prop="WO_NO">
+											<div style="display: flex;align-items: center;">
+												<el-input v-model="ruleForm.WO_NO" clearable @keyup.native.enter="getWorkInfo"></el-input>
+												<div @tap="openBarcode">
+													<img src="../../images/saoma.png" alt="saoma" class="saoma-icon">
+												</div>
+											</div>
+										</el-form-item>
+									</el-col>
+								</el-row>
+								<el-row>
+									<el-col span="12">
+										<el-form-item label="产品型号" prop="MODEL_NAME">
+											<el-input v-model="ruleForm.MODEL_NAME" readonly></el-input>
+										</el-form-item>
+									</el-col>
+									<el-col span="12">
+										<el-form-item label="创建人" prop="CREATOR">
+											<el-input clearable v-model="ruleForm.CREATOR" readonly></el-input>
+										</el-form-item>
+									</el-col>
+								</el-row>
+								<el-row>
+									<el-col span="12">
+										<el-form-item label="料号" prop="PART_NO">
+											<el-input v-model="ruleForm.PART_NO" readonly clearable></el-input>
+										</el-form-item>
+									</el-col>
+									<el-col span="12">
+										<el-form-item label="生产时间" prop="PRODUCTION_TIME">
+											<!-- <el-date-picker style="width: 100%" placeholder=" "
+											 v-model="ruleForm.PRODUCTION_TIME" value-format="yyyy-MM-dd"
+											 readonly
+											 type="date"></el-date-picker> -->
+											<el-input v-model="ruleForm.PRODUCTION_TIME" readonly @click.native="showProductionTimePicker=true"
+											 clearable>
+												<i slot="suffix" class="el-input__icon el-icon-date"></i>
+											</el-input>
+											<van-calendar 
+												v-model="showProductionTimePicker" 
+												:show-confirm="false" 
+												@confirm="dealProductionTime"
+												:formatter="formatter"
+											/>
+										</el-form-item>
+									</el-col>
+								</el-row>
+								<el-row>
+									<el-col span="24">
+										<el-form-item label="判断状态" prop="END_STATUS">
+											<!-- <div style="display: flex;justify-content: flex-start;align-items: center;">
+												<div>
+													<el-radio :label="'Y'" v-model="ruleForm.END_STATUS">
+														<span style="color: #67C23A">正确</span>
+													</el-radio>
+												</div>
+												<div style="margin-left: 30px;">
+													<el-radio :label="'N'" v-model="ruleForm.END_STATUS">
+														<span style="color: #F56C6C">失败</span>
+													</el-radio>
+												</div>
+											</div> -->
+											<el-switch v-model="ruleForm.END_STATUS" active-color="#67C23A" inactive-color="#F56C6C" active-value="Y"
+											 inactive-value="N" :active-text="ruleForm.END_STATUS === 'Y' ? '正确' : '失败'">
+											</el-switch>
+										</el-form-item>
+									</el-col>
+								</el-row>
+							</el-form>
+						</div>
+
+						<!-- <div :style="{
+							  height: tableHeight
+							}">
+							<vxe-table ref="xTable" border resizable height="100%" size="medium" align="center" highlight-hover-row
+							 highlight-current-row show-overflow auto-resize keep-source stripe :loading="loading" :data="mainTable"
+							 :edit-rules="validRules" :mouse-config="{selected: true}" :edit-config="{trigger: 'click', mode: 'cell', showStatus: true}"
+							 :radio-config="{labelField: 'name', trigger: 'row'}" :checkbox-config="{checkField: 'checked', trigger: 'row'}">
+								<vxe-table-column type="seq" min-width="50" title="序号"></vxe-table-column>
+								<vxe-table-column field="CONTENT_TYPE_Caption" min-width="180" title="确认项目"></vxe-table-column>
+								<vxe-table-column field="CONTENT" min-width="180" title="确认内容"></vxe-table-column>
+								<vxe-table-column field="CONFIRM_CONTENT" min-width="180" title="确认标准"></vxe-table-column>
+								<vxe-table-column field="RESULT" min-width="180" title="判断结果" :edit-render="{autofocus: '.custom-input', type: 'visible'}">
+									<template v-slot:edit="scoped">
+										<div>
+											<div style="display: flex;align-items: center;">
+												<div>
+													<el-radio label="Y" v-model="scoped.row.RESULT">
+														<span style="color: #67C23A">合格</span>
+													</el-radio>
+												</div>
+												<div style="margin-left: 20px;">
+													<el-radio label="N" v-model="scoped.row.RESULT">
+														<span style="color: #F56C6C">不合格</span>
+													</el-radio>
+												</div>
+											</div>
+										</div>
+									</template>
+								</vxe-table-column>
+								<vxe-table-column field="DESCRIPTION" min-width="180" title="判断描述" :edit-render="{name: '$input', type: 'visible'}"></vxe-table-column>
+							</vxe-table>
+						</div> -->
+						<el-card class="box-card" style="flex: 1;background-color: #d2d2d2;">
+							<div slot="header" class="clearfix">
+								<span>确认内容明细</span>
+								<!-- <el-button style="float: right; padding: 3px 0" type="text">操作按钮</el-button> -->
+							</div>
+							<div style="padding: 5px;width: 100%;height: 100%;">
+								<el-card v-for="(dataItem,index) in mainTable" :key="dataItem.ID" :style="{
+									marginBottom: index < mainTable.length -1 ? '10px':0
+								}">
+									<div style="display: flex;">
+										<div style="width: 40px;border-right: #ebeef5 1px solid;display: flex;align-items: center;justify-content: center;">
+											{{index + 1}}
+										</div>
+										<div style="flex: 1;padding-left: 10px;">
+											<el-form label-width="80px" size="small">
+												<el-form-item label="确认项目">
+													<el-input v-model="dataItem.CONTENT_TYPE_Caption" placeholder="请输入内容"></el-input>
+												</el-form-item>
+												<el-form-item label="确认内容">
+													<el-input v-model="dataItem.CONTENT" placeholder="请输入内容"></el-input>
+												</el-form-item>
+												<el-form-item label="确认标准">
+													<el-input v-model="dataItem.CONFIRM_CONTENT" placeholder="请输入内容"></el-input>
+												</el-form-item>
+												<el-form-item label="判断结果">
+													<!-- <el-radio label="Y" v-model="dataItem.RESULT">
+														<span style="color: #67C23A">合格</span>
+													</el-radio>
+													<el-radio label="N" v-model="dataItem.RESULT">
+														<span style="color: #F56C6C">不合格</span>
+													</el-radio> -->
+													<el-switch v-model="dataItem.RESULT" active-color="#67C23A" inactive-color="#F56C6C" active-value="Y"
+													 inactive-value="N" :active-text="dataItem.RESULT === 'Y' ? '合格' : '不合格'">
+													</el-switch>
+												</el-form-item>
+												<el-form-item label="判断描述">
+													<el-input type="textarea" :rows="2" v-model="dataItem.DESCRIPTION" placeholder="请输入内容"></el-input>
+												</el-form-item>
+											</el-form>
+										</div>
+									</div>
+								</el-card>
+							</div>
+						</el-card>
+
+					</div>
+				</div>
+				<div style="display: flex;" class="order-bottom-cell-button">
+					<el-button type="success" icon="el-icon-circle-check" @tap.native="saveData">保存</el-button>
+					<el-button type="danger" icon="el-icon-delete" @tap.native="resetFormData">清除</el-button>
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript" charset="utf-8">
+			mui.init({
+				// pullRefresh: {
+				// 	container: '#app',
+				// 	down: {
+				// 		style: 'circle', //必选，下拉刷新样式，目前支持原生5+ ‘circle’ 样式
+				// 		color: '#2BD009', //可选，默认“#2BD009” 下拉刷新控件颜色
+				// 		height: '50px', //可选,默认50px.下拉刷新控件的高度,
+				// 		range: '100px', //可选 默认100px,控件可下拉拖拽的范围
+				// 		offset: '0px', //可选 默认0px,下拉刷新控件的起始位置
+				// 		auto: false, //可选,默认false.首次加载自动上拉刷新一次
+				// 		callback: function() {
+				// 			vm.computedHeight()
+				// 			vm.resetFormData()
+				// 			vm.getLoadData()
+				// 			vm.getDetailInfo()
+				// 			vm.getLines(true)
+				// 		} //必选，刷新函数，根据具体业务来编写，比如通过ajax从服务器获取新数据；
+				// 	}
+				// }
+			});
+		</script>
+		<script>
+			var vm = new Vue({
+				el: '#app',
+				data: {
+					loaded: false,
+					ID: 0,
+					rules: {
+						LINE_ID: [{
+							required: true,
+							message: '请选择线别',
+							trigger: 'change'
+						}],
+						PART_NAME: [{
+							required: true,
+							message: '产品名称不能为空',
+							trigger: 'blur'
+						}],
+						WO_NO: [{
+							required: true,
+							message: '请输入工单号',
+							trigger: 'blur'
+						}],
+						MODEL_NAME: [{
+							required: true,
+							message: '产品型号不能为空',
+							trigger: 'blur'
+						}],
+						CREATOR: [{
+							required: true,
+							message: '创建人不能为空',
+							trigger: 'blur'
+						}],
+						PART_NO: [{
+							required: true,
+							message: '料号不能为空',
+							trigger: 'blur'
+						}],
+						PRODUCTION_TIME: [{
+							required: true,
+							message: '请选择生产时间',
+							trigger: 'blur'
+						}],
+						END_STATUS: [{
+							required: true,
+							message: '请选择判断状态',
+							trigger: 'blur'
+						}]
+					},
+					ruleForm: {
+						MST_NO: '',
+						CUSTOMER_ID: '',
+						END_STATUS: '',
+						LINE_ID: '',
+						LINE_NAME: '',
+						MODEL_ID: '',
+						ORAGE_ID: 0,
+						PRODUCTION_TIME: '',
+						PART_NAME: '',
+						WO_NO: '',
+						MODEL_NAME: '',
+						PART_NO: '',
+						CREATOR: ''
+					},
+					linesList: [],
+					loading: false,
+					mainTable: [],
+					validRules: {
+						RESULT: [{
+							required: true,
+							message: '请选择判断结果'
+						}]
+					},
+					tableHeight: '',
+					showLinePicker: false,
+					showProductionTimePicker: false
+				},
+				computed: {
+					userinfo: function() {
+						var userinfo = window.localStorage.getItem('Userinfo')
+						userinfo = userinfo ? JSON.parse(userinfo) : {};
+						return userinfo
+					}
+				},
+				methods: {
+					// 开启扫描
+					openBarcode: function() {
+						createWithoutTitle('/pages/barcode_scan.html', {
+							titleNView: {
+								type: 'float',
+								backgroundColor: 'rgb(34, 34, 34)',
+								titleText: '扫一扫',
+								titleColor: '#FFFFFF',
+								autoBackButton: true
+							}
+						});
+					},
+					goBack: function() {
+						var webview = plus.webview.getWebviewById('MesProductionPreMst')
+						mui.fire(webview, 'refresh')
+						mui.back()
+					},
+					getWorkInfo: function() {
+						var that = this
+						if (!that.ruleForm.WO_NO) {
+							that.$message.error('请输入工单号')
+							return false
+						}
+						http({
+							url: 'MesProductionPreMst/GetWoInfo',
+							method: 'get',
+							params: {
+								wo_no: that.ruleForm.WO_NO
+							},
+							success: function(res) {
+								if (res.Result && res.Result.length) {
+									var data = res.Result[0] || {}
+									that.ruleForm.PART_NO = data.PART_NO
+									that.ruleForm.MODEL_ID = data.MODEL_ID
+									that.ruleForm.MODEL_NAME = data.MODEL_NAME
+									that.ruleForm.CUSTOMER_ID = data.CUSTOMER_ID
+									that.ruleForm.PART_NAME = data.PN_NAME
+									that.ruleForm.ORAGE_ID = data.ORAGE_ID // 暂时没有组织id
+								} else {
+									that.$message.error('该工单号不存在')
+								}
+							}
+						})
+					},
+					getLines: function(isPullFresh) {
+						var Userinfo = window.localStorage.getItem('Userinfo')
+						Userinfo = Userinfo ? JSON.parse(Userinfo) : {};
+						var that = this
+						var p1 = function() {
+							return new Promise(function(resolve, reject) {
+								http({
+									url: 'SmtLines/LoadData',
+									method: 'get',
+									params: {
+										USER_ID: Userinfo.ID
+									},
+									success: function(res) {
+										if (res.Result) {
+											resolve(res)
+										} else {
+											reject(res)
+										}
+									}
+								})
+							})
+						}
+						var p2 = function() {
+							return new Promise(function(resolve, reject) {
+								http({
+									url: 'SfcsOperationLines/LoadData',
+									method: 'get',
+									params: {
+										USER_ID: Userinfo.ID
+									},
+									success: function(res) {
+										if (res.Result) {
+											resolve(res)
+										} else {
+											reject(res)
+										}
+									}
+								})
+							})
+						}
+						Promise.all([p1(), p2()]).then(function(res) {
+							if (isPullFresh) {
+								mui('#app').pullRefresh().endPulldown()
+							}
+							that.linesList = []
+							for (var i = 0; i < res.length; i++) {
+								var item = res[i]
+								var tmpItem = typeof item.Result === 'string' ? JSON.parse(item.Result) : item.Result;
+								tmpItem = tmpItem || []
+								var tmpList = []
+								for (var j = 0; j < tmpItem.length; j++) {
+									var _item = tmpItem[j]
+									tmpList.push({
+										label: _item.LINE_NAME || _item.OPERATION_LINE_NAME,
+										value: _item.ID.toString()
+									})
+								}
+								that.linesList = that.linesList.concat(tmpList)
+							}
+						}).catch(function(res) {
+							if (isPullFresh) {
+								mui('#app').pullRefresh().endPulldown()
+							}
+						})
+					},
+					getLoadData: function() {
+						var that = this
+						if (that.ID) {
+							http({
+								url: 'MesProductionPreMst/LoadData',
+								method: 'get',
+								params: {
+									ID: that.ID
+								},
+								success: function(res) {
+									if (res.Result) {
+										that.ruleForm = res.Result[0]
+									}
+								},
+								error: function(error) {
+
+								}
+							})
+						}
+					},
+					getDetailInfo: function() {
+						var that = this
+						if (that.ID) {
+							http({
+								url: 'MesProductionPreMst/GetDetailInfo',
+								params: {
+									id: that.ID
+								},
+								method: 'get',
+								success: function(res) {
+									that.mainTable = res.Result || []
+								}
+							})
+						} else {
+							http({
+								url: 'MesProductionPreConf/LoadData',
+								params: {
+									Limit: 200000000
+								},
+								method: 'get',
+								success: function(res) {
+									var tmp = res.Result || []
+									that.mainTable = []
+									for (var i = 0; i < tmp.length; i++) {
+										var item = tmp[i]
+										that.mainTable.push({
+											ID: 0,
+											CONF_ID: item.ID,
+											CONTENT_TYPE: item.CONTENT_TYPE,
+											CONTENT_TYPE_Caption: item.CONTENT_TYPE_Caption,
+											CONTENT: item.CONTENT,
+											CONFIRM_CONTENT: item.CONFIRM_CONTENT,
+											MST_ID: 0,
+											CREATOR: that.userinfo.USER_NAME,
+											CREATIME: '',
+											RESULT: '',
+											DESCRIPTION: ''
+										})
+									}
+								}
+							})
+						}
+					},
+					computedHeight: function() {
+						var that = this
+						window.addEventListener('resize', function() {
+							that.computedHeight()
+						})
+						that.$nextTick(function() {
+							var formHeight = that.$refs.ruleForm.$el.offsetHeight
+							var windowHeight = document.body.clientHeight || document.documentElement.clientHeight
+							that.tableHeight = (windowHeight - 58 - formHeight - 20) + 'px'
+						})
+					},
+					resetFormData: function() {
+						this.ruleForm = {
+							MST_NO: '',
+							CUSTOMER_ID: '',
+							END_STATUS: '',
+							LINE_ID: '',
+							MODEL_ID: '',
+							ORAGE_ID: 0,
+							PRODUCTION_TIME: '',
+							PART_NAME: '',
+							WO_NO: '',
+							MODEL_NAME: '',
+							PART_NO: '',
+							CREATOR: this.userinfo.USER_NAME || ''
+						}
+						this.mainTable = []
+						this.getDetailInfo()
+					},
+					saveData: function() {
+						var that = this
+						this.$refs.ruleForm.validate(function(valid, errInfo) {
+							if (valid) {
+								that.$refs.xTable.validate(function(_valid) {
+									if (!_valid) {
+										that.ruleForm.ID = that.ID || 0
+										var mainTable = []
+										for (var i = 0; i < that.mainTable.length; i++) {
+											var item = that.mainTable[i]
+											mainTable.push({
+												ID: item.ID || 0,
+												CONF_ID: item.CONF_ID,
+												MST_ID: item.MST_ID,
+												RESULT: item.RESULT,
+												DESCRIPTION: item.DESCRIPTION
+											})
+										}
+										var form = {
+											MainData: that.ruleForm
+										}
+										if (that.ID) {
+											form.UpdateRecords = mainTable
+										} else {
+											form.InsertRecords = mainTable
+										}
+										http({
+											url: 'MesProductionPreMst/SaveData',
+											method: 'post',
+											params: form,
+											success: function(res) {
+												if (res.Result) {
+													that.$notify.success({
+														title: '成功',
+														message: that.ID ? '修改成功' : '新增成功'
+													})
+													tips('success')
+													if (!that.ID) {
+														// 重置表单
+														that.resetFormData()
+													}
+												}
+											}
+										})
+									}
+								})
+							} else {
+								try {
+									Object.keys(errInfo).forEach(function(item) {
+										that.$message.error(errInfo[item][0].message)
+										throw Error(errInfo[item][0].message)
+									})
+								} catch (e) {
+									console.log(e.message)
+								}
+							}
+						})
+					},
+					dealLinePicker: function(dataItem) {
+						this.ruleForm.LINE_ID = dataItem.value
+						this.ruleForm.LINE_NAME = dataItem.label
+						this.showLinePicker = false
+					},
+					dealProductionTime:function(date){
+						this.ruleForm.PRODUCTION_TIME = this.dateFormat('YY-mm-dd',date)
+						this.showProductionTimePicker=false
+					},
+					dateFormat:function(fmt, date) {
+					    let ret;
+					    const opt = {
+					        "Y+": date.getFullYear().toString(),        // 年
+					        "m+": (date.getMonth() + 1).toString(),     // 月
+					        "d+": date.getDate().toString(),            // 日
+					        "H+": date.getHours().toString(),           // 时
+					        "M+": date.getMinutes().toString(),         // 分
+					        "S+": date.getSeconds().toString()          // 秒
+					        // 有其他格式化字符需求可以继续添加，必须转化成字符串
+					    };
+					    for (let k in opt) {
+					        ret = new RegExp("(" + k + ")").exec(fmt);
+					        if (ret) {
+					            fmt = fmt.replace(ret[1], (ret[1].length == 1) ? (opt[k]) : (opt[k].padStart(ret[1].length, "0")))
+					        };
+					    };
+					    return fmt;
+					},
+					//格式化日期
+					formatter:function(day){
+						return day
+					}
+				},
+				created: function() {
+
+				}
+			})
+			mui.plusReady(function() {
+				var _selfWebview = plus.webview.currentWebview()
+				vm.ID = _selfWebview.ID || 0
+				vm.loaded = true
+				vm.computedHeight()
+				vm.resetFormData()
+				vm.getLines()
+				vm.getLoadData()
+				vm.getDetailInfo()
+
+			})
+			document.addEventListener('refresh', function(e) {
+				vm.ID = e.detail.ID || 0
+				vm.loaded = true
+				vm.computedHeight()
+				vm.resetFormData()
+				vm.getLines()
+				vm.getLoadData()
+				vm.getDetailInfo()
+			})
+
+			// 扫码回调
+			function scaned(t, r, f) {
+				vm.$set(vm.ruleForm, 'WO_NO', r)
+				vm.getWorkInfo()
+			}
+		</script>
+	</body>
+</html>

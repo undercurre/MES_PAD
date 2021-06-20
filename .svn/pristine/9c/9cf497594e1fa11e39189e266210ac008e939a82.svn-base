@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<script src="../../js/qs.js"></script>
+		<!-- 引入vue -->
+		<script src="../../js/vue.min.js"></script>
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../../css/elementUi.min.css">
+		<link rel="stylesheet" href="../../css/vant.min.css" />
+		<script src="../../js/common.js"></script>
+		<!-- 引入组件库 -->
+		<script src="../../js/elementUi.min.js"></script>
+		<script src="../../js/vant.min.js"></script>
+		<script src="../../js/mui.min.js"></script>
+		<link href="../../css/mui.min.css" rel="stylesheet" />
+		<script src="../../js/utils.js"></script>
+		<link rel="stylesheet" href="../../css/MesProductionPreMst.css">
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../../css/vxe-table-2.9.5.min.css">
+		<!-- 引入脚本 -->
+		<script src="../../js/day.js"></script>
+		<script src="../../js/xe-utils.min.js"></script>
+		<script src="../../js/vxe-table-2.9.5.min.js"></script>
+		<script src="../../js/es5-shim.min.js"></script>
+		<script src="../../js/promise-6.1.0.js"></script>
+		<style>
+			/** 全局 dialog header 样式  */
+			.el-dialog__header {
+			  background: rgb(236, 241, 246);
+			}
+			.el-dialog__header .el-dialog__title {
+			  color: #606266;
+			}
+			.el-dialog__body {
+				padding: 10px 20px;
+			}
+			.el-dialog {
+				margin-top: 5vh!important;
+				margin: 0 auto 0;
+			}
+		</style>
+		<script>
+			if('addEventListener' in document) {
+			     document.addEventListener('DOMContentLoaded',function() {
+			     FastClick.attach(document.body);
+			   },false);
+			}
+		</script>
+	</head>
+	<body>
+		<div class="page" id="app">
+			<div class="custom-container-full">
+				<div class="custom-container-full__header" ref="header">
+					<div>
+						<div class="custom-container-header">
+							<div class="transform-cx">
+								<div class="cch-block">
+								<el-page-header @back="goBack" content="新增巡检">
+									<template #content>
+										
+									</template> 
+								</el-page-header>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="custom-container-full__body" ref="body">
+					<div class="block-one">
+						<el-form :show-message="false" :model="form" ref="ruleForm" :rules="rules" label-width="120px" size="mini">
+							<el-row>
+								<el-col :span="12">
+									<el-form-item label="经营单位" prop="BUSINESS_UNIT">
+										<!-- <el-select v-model="form.BUSINESS_UNIT" :disabled="check_status==4?false:true" placeholder=" " style="width: 100%"
+										 filterable clearable>
+											<el-option v-for="item in options" :key="item.ID" :label="item.CHINESE" :value="item.ID"></el-option>
+										</el-select> -->
+										<el-input v-model="form.BUSINESS_UNIT_NAME" readonly clickable @click.native="showCategoryPicker=true" clearable></el-input>
+									</el-form-item>
+									<el-form-item label="线别" prop="U_LINE">
+										<!-- <el-select v-model="form.U_LINE" :disabled="check_status==4?false:true" placeholder=" " style="width: 100%"
+										 filterable clearable>
+											<el-option v-for="item in line" :key="item.ID" :label="item.LINE_NAME" :value="item.ID"></el-option>
+										</el-select> -->
+										<el-input v-model="form.U_LINE_DESC" readonly clickable @click.native="showLinePicker=true" clearable></el-input>
+									</el-form-item>
+									<el-form-item label="巡检时间" prop="CREATETIME">
+										<el-time-picker v-model="form.CREATETIME" :disabled="check_status==4?false:true" class="select" placeholder=" "
+										 format="HH:mm" value-format="HH:mm" type="date" style="width: 100%" :default-value="form.CREATETIME"></el-time-picker>
+									</el-form-item>
+									<el-form-item label="产品型号" prop="PRODUCT_MODEL">
+										<el-input v-model="form.PRODUCT_MODEL" readonly :disabled="banStatus" />
+									</el-form-item>
+									<el-form-item label="生产日期" prop="PRODUCT_DATE">
+										<el-date-picker style="width: 100%" v-model="form.PRODUCT_DATE" placeholder=" " format="yyyy-MM-dd"
+										 value-format="yyyy-MM-dd" type="date"></el-date-picker>
+									</el-form-item>
+									<el-form-item label="巡检分类" prop="IPQA_TYPE">
+										<el-input v-model="IPQA_TYPE_Sele" readonly :disabled="banStatus"></el-input>
+									</el-form-item>
+								</el-col>
+								<el-col :span="12">
+									<el-form-item label="部门" prop="DEPARTMENT">
+										<!-- <el-select v-model="form.DEPARTMENT" :disabled="check_status==4?false:true" placeholder=" " style="width: 100%"
+										 filterable clearable>
+											<el-option v-for="item in GetDepartmentList" :key="item.ID" :label="item.CHINESE" :value="item.ID"></el-option>
+										</el-select> -->
+										<el-input v-model="form.DEPARTMENT_NAME" readonly clickable @click.native="showDepartmentPicker=true"
+										 clearable></el-input>
+									</el-form-item>
+									<el-form-item label="产品名称" prop="PRODUCT_NAME">
+										<el-input v-model="form.PRODUCT_NAME" readonly :disabled="banStatus"></el-input>
+									</el-form-item>
+									<el-form-item label="生产单号" prop="PRODUCT_BILLNO">
+										
+											<el-input v-model="form.PRODUCT_BILLNO" readonly :disabled="banStatus" class="with-scan">
+												<template #suffix v-if="!banStatus">
+														 <van-icon name="scan" @tap="openBarcode('PRODUCT_BILLNO')"/>
+												</template>
+											</el-input>
+											<!-- <el-button style="margin-left: 10px" v-if="check_status==4" type="primary" :disabled="banStatus" @tap.native="dialogTableVisible = true">选择</el-button> -->
+										
+									</el-form-item>
+									<el-form-item label="生产数量" prop="CREATOR">
+										<el-input v-model="form.PRODUCT_QTY" readonly :disabled="banStatus" />
+									</el-form-item>
+									<el-form-item label="单号" prop="BILL_CODE">
+											<el-input v-model="form.BILL_CODE" readonly :disabled="banStatus" class="with-scan">
+												<template #suffix v-if="!banStatus">
+														 <van-icon name="scan" @tap="openBarcode('BILL_CODE')"/>
+												</template>
+											</el-input>
+										
+
+									</el-form-item>
+									<el-form-item label="巡检日期" prop="CREATEDATE">
+										<el-date-picker style="width: 100%" v-model="form.CREATEDATE" placeholder=" " format="yyyy-MM-dd"
+										 value-format="yyyy-MM-dd" type="date"></el-date-picker>
+									</el-form-item>
+								</el-col>
+							</el-row>
+						</el-form>
+					</div>
+
+					<div :style="{
+					      height: tableHeight
+					    }">
+						<!-- <vxe-table class="x-vxe-table" ref="xTable" stripe border resizable size="medium" align="center"
+						 highlight-current-row highlight-hover-row show-overflow height="100%" auto-resize sync-resize keep-source :data="tableData"
+						 :edit-rules="validRules" :mouse-config="{selected: true}" :edit-config="{trigger: 'click', mode: 'row'}"
+						 :radio-config="{labelField: 'name', trigger: 'row'}" :checkbox-config="{checkField: 'checked', trigger: 'row'}">
+							<vxe-table-column show-overflow field="ORDER_ID" title="序号" width="60"></vxe-table-column>
+							<vxe-table-column show-overflow field="CATEGORY" title="分类" width="80" :filters="[{label: '人', value: '人'}, {label: '机', value: '机'}, {label: '料', value: '料'}, {label: '法', value: '法'}, {label: '环', value: '环'}]"></vxe-table-column>
+							<vxe-table-column show-overflow field="ITEM_NAME" title="巡检项目" width="200"></vxe-table-column>
+							<vxe-table-column show-overflow field="PROCESS_REQUIRE" title="品质工艺要求" width="300">
+								<template slot="header">
+									<span v-if="ipqa_type == '0'">
+										<span>巡检内容</span>
+									</span>
+									<span v-else>
+										<span>品质工艺要求</span>
+									</span>
+								</template>
+							</vxe-table-column>
+							<vxe-table-column show-overflow field="REFERENCE_STANDARD" title="参考标准" width="120"></vxe-table-column>
+							<vxe-table-column show-overflow field="QUANTIZE_TYPE_CAPTION" title="有无量化标准" width="120"></vxe-table-column>
+							<vxe-table-column show-overflow field="QUANTIZE_VAL" title="标准值" width="120"></vxe-table-column>
+
+							<vxe-table-column width="240" show-overflow field="IPQA_RESULT" title="巡检结果" :edit-render="{autofocus: '.custom-input', type: 'visible'}">
+								<template v-slot:edit="scoped">
+									<template v-if="scoped.row.QUANTIZE_TYPE ==1 && check_status==4">
+										<vxe-input v-model="scoped.row.IPQA_RESULT" placeholder="请输入值"></vxe-input>
+									</template>
+									<template v-else-if="scoped.row.QUANTIZE_TYPE ==0">
+										<div>
+											<el-switch v-model="scoped.row.IPQA_RESULT" active-text="合格" inactive-text="不合格" active-color="#13ce66"
+											 inactive-color="#cccccc" active-value="1" inactive-value="0"></el-switch>
+										</div>
+									</template>
+									<template v-else>
+										<div v-if="scoped.row.QUANTIZE_TYPE==0 && scoped.row.IPQA_RESULT==1">合格</div>
+										<div v-else-if="scoped.row.QUANTIZE_TYPE==0 && scoped.row.IPQA_RESULT==0">不合格</div>
+										<div v-else>{{ scoped.row.IPQA_RESULT }}</div>
+									</template>
+								</template>
+								<template v-slot="scoped">
+									<div v-if="scoped.row.QUANTIZE_TYPE == 0 && scoped.row.IPQA_RESULT== 1">合格</div>
+									<div v-else-if="scoped.row.QUANTIZE_TYPE == 0 && scoped.row.IPQA_RESULT== 0">不合格</div>
+									<div v-else>{{ scoped.row.IPQA_RESULT }}</div>
+								</template>
+							</vxe-table-column>
+
+							<vxe-table-column width="150" show-overflow field="IPQA_EXPLAIN" title="异常说明" :edit-render="{autofocus: '.custom-input', type: 'visible'}">
+								<template v-slot:edit="scoped">
+									<template v-if="check_status==4">
+										<vxe-input v-model="scoped.row.IPQA_EXPLAIN"></vxe-input>
+									</template>
+									<template v-else>{{ scoped.row.IPQA_EXPLAIN }}</template>
+								</template>
+								<template v-slot="scoped">{{ scoped.row.IPQA_EXPLAIN }}</template>
+							</vxe-table-column>
+						</vxe-table> -->
+						<el-card class="box-card" style="flex: 1;background-color: #d2d2d2;">
+							<div slot="header" class="clearfix">
+								<span>内容明细</span>
+								<!-- <el-button style="float: right; padding: 3px 0" type="text">操作按钮</el-button> -->
+							</div>
+							<div style="padding: 5px;width: 100%;height: 100%;">
+								<el-card v-for="(dataItem,index) in details" :key="dataItem.ID" :style="{
+									marginBottom: index < details.length -1 ? '10px':0
+								}">
+									<div style="display: flex;">
+										<div style="width: 40px;border-right: #ebeef5 1px solid;display: flex;align-items: center;justify-content: center;">
+											{{index + 1}}
+										</div>
+										<div style="flex: 1;padding-left: 10px;">
+											<el-form label-width="80px" size="small">
+												<el-form-item label="分类">
+													<el-input v-model="dataItem.CONTENT_TYPE_Caption" placeholder="请输入内容"></el-input>
+												</el-form-item>
+												<el-form-item label="巡检项目">
+													<el-input v-model="dataItem.CONTENT" placeholder="请输入内容"></el-input>
+												</el-form-item>
+												<el-form-item label="品质工艺要求">
+													<el-input v-model="dataItem.CONFIRM_CONTENT" placeholder="请输入内容"></el-input>
+												</el-form-item>
+												<el-form-item label="参考标准">
+													<el-input v-model="dataItem.CONFIRM_CONTENT" placeholder="请输入内容"></el-input>
+												</el-form-item>
+												<el-form-item label="有无量化标准">
+													<el-input v-model="dataItem.CONFIRM_CONTENT" placeholder="请输入内容"></el-input>
+												</el-form-item>
+												<el-form-item label="标准值">
+													<el-input v-model="dataItem.CONFIRM_CONTENT" placeholder="请输入内容"></el-input>
+												</el-form-item>
+												<el-form-item label="巡检结果">
+													<!-- <el-radio label="Y" v-model="dataItem.RESULT">
+														<span style="color: #67C23A">合格</span>
+													</el-radio>
+													<el-radio label="N" v-model="dataItem.RESULT">
+														<span style="color: #F56C6C">不合格</span>
+													</el-radio> -->
+													<el-switch v-model="dataItem.RESULT" active-color="#67C23A" inactive-color="#F56C6C" active-value="Y"
+													 inactive-value="N" :active-text="dataItem.RESULT === 'Y' ? '合格' : '不合格'">
+													</el-switch>
+												</el-form-item>
+												<el-form-item label="异常说明">
+													<el-input type="textarea" :rows="2" v-model="dataItem.DESCRIPTION" placeholder="请输入内容"></el-input>
+												</el-form-item>
+											</el-form>
+										</div>
+									</div>
+								</el-card>
+							</div>
+						</el-card>
+					</div>
+				</div>
+				<div style="display: flex;" class="order-bottom-cell-button">
+					<el-button type="primary" icon="el-icon-circle-check" @tap.native="savedata_but" size="small">保存</el-button>
+					<el-button v-if="check_status==4" type="success" icon="el-icon-circle-check" @tap.native="submit_but" size="small">提交审核</el-button>
+				</div>
+			</div>
+			<!-- 弹窗表单 -->
+			<el-dialog :close-on-click-modal="false" title="选择工单" :visible.sync="dialogTableVisible" width="80%">
+				<div class="dialog-head" style="margin-bottom: 10px;">
+					<el-input v-model="gridQuery.Key" placeholder=" " clearable style="width:200px" size="mini"></el-input>
+					<el-button type="primary" icon="el-icon-search" @tap.native="search_but" size="mini">搜索</el-button>
+					<el-button type="success" @tap.native="confirm_but" size="mini">确认</el-button>
+				</div>
+				<div style="height: 60vh;">
+					<el-table stripe :data="gridData" border align="center" height="100%" :header-cell-style="{background:'#eef1f6',color:'#606266'}"
+					 @row-click="openDetails">
+						<el-table-column label="选择" width="50" align="center" :show-overflow-tooltip="true">
+							<template slot-scope="scope">
+								<el-radio v-model="radio" class="radio" :label="scope.$index"></el-radio>
+							</template>
+						</el-table-column>
+						<el-table-column property="WO_NO" label="工单号" align="center" width="200" :show-overflow-tooltip="true"></el-table-column>
+						<el-table-column property="PRODUCT_NAME" label="产品名称" align="center" width="180" :show-overflow-tooltip="true"></el-table-column>
+						<el-table-column property="PART_NO" label="料号" align="center" width="180" :show-overflow-tooltip="true"></el-table-column>
+						<el-table-column property="MODEL" label="产品型号" align="center" :show-overflow-tooltip="true" width="180"></el-table-column>
+						<el-table-column property="TARGET_QTY" label="总量" align="center" width="100" :show-overflow-tooltip="true"></el-table-column>
+						<el-table-column property="START_DATE" label="开始日期" align="center" width="100" :show-overflow-tooltip="true"></el-table-column>
+					</el-table>
+				</div>
+				<div style="padding-top: 10px;">
+					<el-pagination :current-page="gridQuery.Page" :page-sizes="[10, 20, 30, 50]" :page-size="gridQuery.Limit" layout="total, sizes, prev, pager, next, jumper" :total="gridtotal" @size-change="handleSizeChange" @current-change="handleCurrentChange"></el-pagination>
+				</div>
+			</el-dialog>
+			<van-popup v-model="showCategoryPicker" round position="bottom">
+				<van-picker show-toolbar :columns="options" value-key="CHINESE" title="经营单位" item-height="40" visible-item-count="10"
+				 @cancel="showCategoryPicker = false" @confirm="dealCategoryPicker" />
+			</van-popup>
+			<van-popup v-model="showDepartmentPicker" round position="bottom">
+				<van-picker show-toolbar :columns="GetDepartmentList" value-key="CHINESE" title="部门" item-height="40"
+				 visible-item-count="10" @cancel="showDepartmentPicker = false" @confirm="dealDepartmentPicker" />
+			</van-popup>
+			<van-popup v-model="showLinePicker" round position="bottom">
+				<van-picker show-toolbar :columns="line" value-key="LINE_NAME" title="线别" item-height="40" visible-item-count="10"
+				 @cancel="showLinePicker = false" @confirm="dealLinePicker" />
+			</van-popup>
+			
+		</div>
+		<script>
+			mui.init({
+
+			})
+		</script>
+		<script>
+			var app = new Vue({
+				el: '#app',
+				data: {
+					listQuery: {
+						id: '',
+						ipqa_type: ''
+					},
+					tableData: [],
+					typeList: [{
+						label: '',
+						value: '',
+						disabled: false
+					}, {
+						label: '人',
+						value: '人',
+						disabled: false
+					}, {
+						label: '机',
+						value: '机',
+						disabled: false
+					}, {
+						label: '料',
+						value: '料',
+						disabled: false
+					}, {
+						label: '法',
+						value: '法',
+						disabled: false
+					}, {
+						label: '环',
+						value: '环',
+						disabled: false
+					}],
+					ipqa_type: null,
+					check_status: '4',
+					validRules: {
+						IPQA_RESULT: [{
+							required: true,
+							message: '巡检结果必须填写'
+						}]
+					},
+
+					options: [],
+					line: [],
+					GetDepartmentList: [],
+					DepartmentList: [],
+					banStatus: false,
+					value: '',
+					form: {
+						ID: '', // 主键
+						BUSINESS_UNIT: '', // 经营
+						BUSINESS_UNIT_NAME:'',
+						DEPARTMENT: '', // 部门
+						DEPARTMENT_NAME:'',
+						U_LINE: '', // 线别
+						U_LINE_NAME:'',
+						PRODUCT_NAME: '', // 产品名称
+						PRODUCT_MODEL: '', // 产品型号
+						PRODUCT_BILLNO: '', // 生产单号:
+						PRODUCT_QTY: '', // 生产数量:
+						CREATETIME: '', // 巡检时间
+						BILL_CODE: '', // 单  号
+						IPQA_TYPE: '', // 巡检分类
+						insertRecords: [],
+						updateRecords: [],
+						CREATEDATE: '', //  开始日期
+						PRODUCT_DATE: '', //  生产日期
+
+						CREATOR: '', // 创作者
+						CHECK_STATUS: '', // 检查状态
+						UserName: '' // 用户名
+					},
+					details:[],
+					rules: {
+						BUSINESS_UNIT: [{
+							required: true,
+							message: '请选择经营单位',
+							trigger: 'blur'
+						}],
+						DEPARTMENT: [{
+							required: true,
+							message: '请选择部门',
+							trigger: 'blur'
+						}],
+						U_LINE: [{
+							required: true,
+							message: '请选择线别',
+							trigger: 'blur'
+						}],
+						CREATETIME: [{
+							required: true,
+							message: '请选择巡检时间',
+							trigger: 'blur'
+						}],
+						PRODUCT_NAME: [{
+							required: true,
+							message: '请填写填产品名称',
+							trigger: 'blur'
+						}]
+					},
+					IPQA_TYPE_Sele: '',
+					// 弹窗表格
+					gridData: [],
+					dialogTableVisible: false,
+					radio: '',
+					gridQuery: {
+						Page: 1, // 当前页
+						Limit: 10, // 分页大小
+						Key: '' // 搜索关键字
+					},
+					gridtotal: 0,
+					orderArr: [],
+					// 提交审核
+					submit: {
+						ID: null,
+						Operator: null
+					},
+					tableHeight: '200px',
+					field: '',
+					showProductionTimePicker: false,
+					showCategoryPicker: false,
+					showDepartmentPicker: false,
+					showLinePicker: false,
+					minDate: dayjs().subtract(6,'month').$d
+				},
+				computed: {
+					userinfo: function() {
+						var userinfo = window.localStorage.getItem('Userinfo')
+						userinfo = userinfo ? JSON.parse(userinfo) : {};
+						return userinfo
+					}
+				},
+				methods: {
+					computedHeight: function() {
+						var that = this
+						window.addEventListener('resize', function() {
+							that.computedHeight()
+						})
+						that.$nextTick(function() {
+							var formHeight = that.$refs.ruleForm.$el.offsetHeight
+							var windowHeight = document.body.clientHeight || document.documentElement.clientHeight
+							that.tableHeight = (windowHeight - 58 - formHeight - 20) + 'px'
+						})
+					},
+					// 开启扫描
+					openBarcode: function(field) {
+						this.field = field
+						createWithoutTitle('/pages/barcode_scan.html', {
+							titleNView: {
+								type: 'float',
+								backgroundColor: 'rgb(34, 34, 34)',
+								titleText: '扫一扫',
+								titleColor: '#FFFFFF',
+								autoBackButton: true
+							}
+						});
+					},
+					goBack: function() {
+						var webview = plus.webview.getWebviewById('IpqaMst')
+						mui.fire(webview, 'refresh')
+						mui.back()
+					},
+					// 获取下拉菜单和编辑的值
+					getAddRrList: function() {
+						var that = this
+						http({
+							url: 'IpqaMst/AddOrModify',
+							method: 'get',
+							params: that.listQuery,
+							success: function(res) {
+								if (res.Result) {
+									var data = res.Result
+									that.check_status = data.CHECK_STATUS
+									that.options = data.BusinessUnitsList
+									that.line = data.LineList
+									that.GetDepartmentList = data.DepartmentList
+									that.DepartmentList = data.DepartmentList
+									that.form.ID = data.ID
+									that.form.CREATEDATE = data.CREATEDATE
+									that.form.CHECK_STATUS = data.CHECK_STATUS
+									that.form.PRODUCT_NAME = data.PRODUCT_NAME
+									that.form.PRODUCT_MODEL = data.PRODUCT_MODEL
+									that.form.PRODUCT_DATE = data.PRODUCT_DATE
+									that.form.PRODUCT_BILLNO = data.PRODUCT_BILLNO
+									that.form.CREATOR = data.CREATOR
+									that.form.IPQA_TYPE = data.IPQA_TYPE
+									that.form.BILL_CODE = data.BILL_CODE
+									that.form.CREATETIME = data.CREATETIME
+									if (data.PRODUCT_QTY) {
+										that.form.PRODUCT_QTY = data.PRODUCT_QTY
+									}
+									if (data.DEPARTMENT_ID) {
+										that.form.DEPARTMENT = data.DEPARTMENT_ID
+									}
+									if (data.BUSINESS_UNIT_ID) {
+										that.form.BUSINESS_UNIT = data.BUSINESS_UNIT_ID
+									}
+									if (data.U_LINE_ID) {
+										that.form.U_LINE = data.U_LINE_ID
+									}
+									if (data.ID === 0) {
+										that.form.CREATOR = that.userinfo.USER_NAME
+									}
+								}
+							}
+						})
+					},
+					// 获取查询明细数据
+					getLoadDtlData: function() {
+						var that = this
+						http({
+							url: 'IpqaMst/LoadDtlData',
+							params: {
+								mst_id: that.listQuery.id
+							},
+							method: 'get',
+							success: function(res) {
+								if (res.Result) {
+									var data = JSON.parse(res.Result)
+									that.tableData = data
+									if (that.ipqa_type === 0) {
+										that.IPQA_TYPE_Sele = 'SMT车间巡检'
+									} else {
+										that.IPQA_TYPE_Sele = '产线车间巡检'
+									}
+								}
+							}
+						})
+					},
+					// 过滤部门
+					business_but: function(val) {
+						this.GetDepartmentList = []
+						var that = this
+						this.DepartmentList.forEach(function(v) {
+							if (v.SBU_ID !== val) {
+								that.GetDepartmentList = []
+								that.form.DEPARTMENT = ''
+							} else {
+								that.GetDepartmentList.push(v)
+							}
+						})
+					},
+					// 获取表格配置
+					getConfig: function() {
+						var that = this
+						http({
+							url: 'IpqaMst/GetIpqaConfig',
+							params: that.listQuery,
+							method: 'get',
+							success: function(res) {
+								if (res.Result) {
+									var ipqaConfig = JSON.parse(res.Result)
+									var mst_id = that.listQuery.id
+									ipqaConfig.forEach(function(item) {
+										var record = {
+											ID: 0,
+											ORDER_ID: item.ORDER_ID,
+											MST_ID: mst_id,
+											IPQA_CONFIG_ID: item.ID,
+											CATEGORY: item.CATEGORY,
+											ITEM_NAME: item.ITEM_NAME,
+											PROCESS_REQUIRE: item.PROCESS_REQUIRE,
+											REFERENCE_STANDARD: item.REFERENCE_STANDARD,
+											QUANTIZE_TYPE: item.QUANTIZE_TYPE,
+											QUANTIZE_TYPE_CAPTION: item.QUANTIZE_TYPE_CAPTION,
+											QUANTIZE_VAL: item.QUANTIZE_VAL,
+											IPQA_RESULT: null,
+											IPQA_EXPLAIN: null
+										}
+										// 从最后插入
+										// that.$refs.xTable.insertAt(record, -1)
+										that.details.push(record)
+									})
+								}
+							}
+						})
+					},
+					adddetail: function() {
+						if (this.tableData === null || this.tableData.length === 0) {
+							this.getConfig()
+						}
+					},
+					// 获取工单列表
+					getWoList: function() {
+						var that = this
+						http({
+							url: 'IpqaMst/GetWoList',
+							params: that.gridQuery,
+							method: 'get',
+							success: function(res) {
+								if (res.Result) {
+									var data = JSON.parse(res.Result)
+									that.gridData = data
+									that.gridtotal = res.TotalCount
+								}
+							}
+						})
+					},
+					// 保存
+					savedata_but: function() {
+						var that = this
+						this.$refs.ruleForm.validate(function(_valid, errInfo) {
+							if (_valid) {
+								var postdata = that.$refs.xTable.getRecordset()
+								if (postdata.insertRecords.length || postdata.removeRecords.length || postdata.updateRecords.length) {
+									that.$refs.xTable.validate(function(valid) {
+										if (!valid) {
+											that.form.insertRecords = postdata.insertRecords
+											that.form.updateRecords = postdata.updateRecords
+											http({
+												url: 'IpqaMst/SaveData',
+												params: that.form,
+												method: 'post',
+												success: function(res) {
+													if (res.Result) {
+														// that.getLoadDtlData()
+														// that.goBack()
+														plus.nativeUI.alert('保存成功', function() {
+															that.goBack()
+														}, '成功')
+														tips('success')
+													}
+												}
+											})
+										}
+									})
+								} else {
+									plus.nativeUI.toast('数据未改动！')
+									tips('error')
+								}
+							} else {
+								try {
+									Object.keys(errInfo).forEach(function(item) {
+										plus.nativeUI.toast(errInfo[item][0].message)
+										throw Error(errInfo[item][0].message)
+									})
+								} catch (e) {
+									console.log(e.message)
+								}
+							}
+						})
+					},
+					// 提交审核
+					submit_but: function() {
+						this.submit.ID = this.listQuery.id
+						this.submit.Operator = this.form.UserName
+						if (this.submit.ID <= 0 || !this.submit.ID) {
+							plus.nativeUI.toast('请先保存数据')
+							tips('error')
+							return false
+						}
+						var that = this
+						http({
+							url: 'IpqaMst/PostToCheck',
+							method: 'post',
+							params: that.submit,
+							success: function(res) {
+								if (res.Result) {
+									plus.nativeUI.alert('提交成功', function(e) {
+										that.goBack()
+									}, '成功')
+								}
+							}
+						})
+					},
+					handleSizeChange: function (val) {
+						this.gridQuery.Page = 1
+						this.gridQuery.Limit = val
+						this.getWoList()
+					},
+					handleCurrentChange: function (val) {
+						this.gridQuery.Page = val
+						this.getWoList()
+					},
+					// 点击获取表格一行数据
+					openDetails: function (row, column, event) {
+						this.orderArr = row
+						this.radio = this.gridData.indexOf(row)
+					},
+					// 搜索
+					search_but: function () {
+						this.gridQuery.Page = 1
+						this.getWoList()
+					},
+					// 确认
+					confirm_but: function () {
+						if (this.orderArr.length !== 0) {
+							this.form.PRODUCT_BILLNO = this.orderArr.WO_NO
+							this.form.PRODUCT_NAME = this.orderArr.PRODUCT_NAME
+							this.form.PRODUCT_MODEL = this.orderArr.MODEL
+							this.form.PRODUCT_QTY = this.orderArr.TARGET_QTY
+							this.form.PRODUCT_DATE = this.orderArr.START_DATE
+							if (this.ipqa_type === 0) {
+								this.IPQA_TYPE_Sele = 'SMT车间巡检'
+							} else {
+								this.IPQA_TYPE_Sele = '产线车间巡检'
+							}
+							this.dialogTableVisible = false
+						} else {
+							plus.nativeUI.toast('请选择工单')
+							tips('error')
+						}
+					},
+					dealProductionTime: function(date) {
+						// console.log(date)
+						// this.value2 = this.dateFormat('YY-mm-dd', date)
+						this.value2 = date
+						this.showProductionTimePicker = false
+					},
+					dateFormat: function(fmt, date) {
+						let ret;
+						const opt = {
+							"Y+": date.getFullYear().toString(), // 年
+							"m+": (date.getMonth() + 1).toString(), // 月
+							"d+": date.getDate().toString(), // 日
+							"H+": date.getHours().toString(), // 时
+							"M+": date.getMinutes().toString(), // 分
+							"S+": date.getSeconds().toString() // 秒
+							// 有其他格式化字符需求可以继续添加，必须转化成字符串
+						};
+						for (let k in opt) {
+							ret = new RegExp("(" + k + ")").exec(fmt);
+							if (ret) {
+								fmt = fmt.replace(ret[1], (ret[1].length == 1) ? (opt[k]) : (opt[k].padStart(ret[1].length, "0")))
+							};
+						};
+						return fmt;
+					},
+					//格式化日期
+					formatter: function(day) {
+						return day
+					},
+					dealCategoryPicker: function(dataItem) {
+						this.form.BUSINESS_UNIT = dataItem.ID
+						this.form.BUSINESS_UNIT_NAME = dataItem.CHINESE
+						this.showCategoryPicker = false
+					},
+					dealDepartmentPicker: function(dataItem) {
+						this.form.DEPARTMENT = dataItem.ID
+						this.form.DEPARTMENT_NAME = dataItem.CHINESE
+						this.showDepartmentPicker = false
+					},
+					dealLinePicker: function(dataItem) {
+						this.form.U_LINE = dataItem.ID
+						this.form.U_LINE_DESC = dataItem.LINE_NAME
+						this.showLinePicker = false
+					}
+				},
+				created: function() {
+
+				}
+			})
+			mui.plusReady(function() {
+				var _selfWebview = plus.webview.currentWebview()
+				app.form.UserName = app.userinfo.USER_NAME
+				console.log(JSON.stringify(_selfWebview))
+				app.listQuery.id = _selfWebview._id || 0;
+				app.listQuery.ipqa_type = _selfWebview.ipqa_type || 0;
+				app.ipqa_type = _selfWebview.ipqa_type || 0;
+				app.form.ID = _selfWebview._id || 0;
+				app.computedHeight()
+				app.getAddRrList()
+				app.getWoList()
+				app.getLoadDtlData()
+				app.adddetail()
+				// app.$nextTick(function() {
+				// 	if (app.ipqa_type === 0) {
+				// 		app.$refs.xTable.getColumnByField('CATEGORY').visible = false
+				// 		app.$refs.xTable.getColumnByField('REFERENCE_STANDARD').visible = false
+				// 		app.$refs.xTable.getColumnByField('QUANTIZE_TYPE_CAPTION').visible = false
+				// 		app.$refs.xTable.getColumnByField('QUANTIZE_VAL').visible = false
+				// 		app.$refs.xTable.refreshColumn()
+				// 	}
+				// })
+			})
+			document.addEventListener('refresh', function(e) {
+				var data = e.detail
+				app.form.UserName = app.userinfo.USER_NAME
+				app.listQuery.id = data._id || 0;
+				app.listQuery.ipqa_type = data.ipqa_type || 0;
+				app.ipqa_type = data.ipqa_type || 0;
+				app.form.ID = data._id || 0;
+				app.computedHeight()
+				app.getAddRrList()
+				app.getWoList()
+				app.getLoadDtlData()
+				app.adddetail()
+				// app.$nextTick(function() {
+				// 	if (app.ipqa_type === 0) {
+				// 		app.$refs.xTable.getColumnByField('CATEGORY').visible = false
+				// 		app.$refs.xTable.getColumnByField('REFERENCE_STANDARD').visible = false
+				// 		app.$refs.xTable.getColumnByField('QUANTIZE_TYPE_CAPTION').visible = false
+				// 		app.$refs.xTable.getColumnByField('QUANTIZE_VAL').visible = false
+				// 		app.$refs.xTable.refreshColumn()
+				// 	}
+				// })
+			})
+
+			// 扫码回调
+			function scaned(t, r, f) {
+				app.$set(app.form, app.field, r)
+				// app.changeCODE()
+			}
+		</script>
+	</body>
+</html>

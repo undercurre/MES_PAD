@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<script src="../../js/qs.js"></script>
+		<!-- 引入vue -->
+		<script src="../../js/vue.min.js"></script>
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../../css/elementUi.min.css">
+		<link rel="stylesheet" href="../../css/vant.min.css" />
+		<script src="../../js/common.js"></script>
+		<!-- 引入组件库 -->
+		<script src="../../js/elementUi.min.js"></script>
+		<script src="../../js/vant.min.js"></script>
+		<script src="../../js/mui.min.js"></script>
+		<link href="../../css/mui.min.css" rel="stylesheet" />
+		<script src="../../js/utils.js"></script>
+		<link rel="stylesheet" href="../../css/MesProductionPreMst.css">
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../../css/vxe-table-2.9.5.min.css">
+		<!-- 引入脚本 -->
+		<script src="../../js/day.js"></script>
+		<script src="../../js/xe-utils.min.js"></script>
+		<script src="../../js/vxe-table-2.9.5.min.js"></script>
+		<script src="../../js/es5-shim.min.js"></script>
+		<script src="../../js/promise-6.1.0.js"></script>
+		<style>
+			/** 全局 dialog header 样式  */
+			.el-dialog__header {
+			  background: rgb(236, 241, 246);
+			}
+			.el-dialog__header .el-dialog__title {
+			  color: #606266;
+			}
+			.el-dialog__body {
+				padding: 10px 20px;
+			}
+			.el-dialog {
+				margin-top: 5vh!important;
+				margin: 0 auto 0;
+			}
+		</style>
+		<script>
+			if('addEventListener' in document) {
+			     document.addEventListener('DOMContentLoaded',function() {
+			     FastClick.attach(document.body);
+			   },false);
+			}
+		</script>
+	</head>
+	<body>
+		<div class="page" id="app">
+			<div class="custom-container-full">
+				<div class="custom-container-full__header" ref="header">
+					<div>
+						<div class="custom-container-header">
+							<div class="transform-cx">
+								<div class="cch-block">
+									<el-page-header @back="goBack" content="检验情况"></el-page-header>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="custom-container-full__body" ref="body">
+					<div class="block-one" style="background-color: #FFFFFF;padding: 20px;">
+						<el-form label-position="top" ref="ruleForm">
+							<el-row :gutter="20">
+								<el-col :span="8">
+									<el-form-item label="检验结果">
+										<el-radio v-model="checkform.RESULT_STATUS" :value="checkform.RESULT_STATUS" :label="1">
+											<span style="color: green">合格</span>
+										</el-radio>
+										<el-radio v-model="checkform.RESULT_STATUS" :value="checkform.RESULT_STATUS" :label="2">
+											<span style="color: red">不合格</span>
+										</el-radio>
+									</el-form-item>
+								</el-col>
+								<el-col :span="16">
+									<el-form-item label="检验备注">
+										<el-input v-model="checkform.REMARK" type="textarea" placeholder="请输入检验备注" />
+									</el-form-item>
+								</el-col>
+							</el-row>
+						</el-form>
+					</div>
+
+					<el-tabs v-model="activeName" style="width: 100%;">
+						<el-tab-pane label="项目检查" name="first">
+							<vxe-table border empty-text="没有更多数据了！" ref="xTable" resizable :height="tableHeight" size="medium" align="center"
+							 highlight-hover-row highlight-current-row show-overflow auto-resize keep-source stripe  :data="checktable"
+							 :edit-config="{
+							          trigger: 'click',
+							          mode: 'row',
+							          showStatus: true,
+							        }">
+								<vxe-table-column field="CHECK_ITEM" min-width="200" title="检验项目"></vxe-table-column>
+								<vxe-table-column field="QUANTIZE_TYPE" min-width="140" title="有无量化标准">
+									<template slot-scope="scope">
+										<span v-if="scope.row.QUANTIZE_TYPE == '1'" style="color: blue">有量化标准</span>
+										<span v-else style="color: green">无量化标准</span>
+									</template>
+								</vxe-table-column>
+								<vxe-table-column field="ISEMPTY" min-width="140" title="是否可空">
+									<template slot-scope="scope">
+										<span v-if="scope.row.ISEMPTY == 'Y'" style="color: green">可空</span>
+										<span v-else style="color: blue">不可空</span>
+									</template>
+								</vxe-table-column>
+							 	<vxe-table-column field="RESULT_VALUE" min-width="200" title="检验结果值" :edit-render="{ autofocus: '.custom-input', type: 'visible' }">>
+
+									<template v-slot:edit="{ row }">
+										<template v-if="row.QUANTIZE_TYPE == '1'">
+											<vxe-input v-model="row.RESULT_VALUE" placeholder="请输入检验结果值" />
+										</template>
+										<div class="check-switch" v-else>
+											<el-switch v-model="row.RESULT_TYPE" active-text="合格" inactive-text="不合格" active-color="#13ce66" inactive-color="#cccccc"
+											 active-value="Y" inactive-value="N" />
+										</div>
+									</template>
+								</vxe-table-column>
+								<vxe-table-column min-width="200" field="RESULT_TYPE" align="center" title="检查结果" :edit-render="{ autofocus: '.custom-input', type: 'visible' }">
+									<template v-slot:edit="{ row }">
+										<div class="check-switch">
+											<el-switch v-model="row.RESULT_TYPE" active-text="合格" inactive-text="不合格" active-color="#13ce66" inactive-color="#cccccc"
+											 active-value="Y" inactive-value="N" />
+										</div>
+									</template>
+								</vxe-table-column>
+
+							 </vxe-table>
+						</el-tab-pane>
+						<el-tab-pane label="物料确认" name="second">
+							<div class="check-table">
+								<vxe-table :data="MaterTable" ref="xTable2" border empty-text="没有更多数据了！" resizable :height="tableHeight" size="medium" align="center"
+								 highlight-hover-row highlight-current-row show-overflow auto-resize keep-source :tree-config="{lazy: true,children: 'ReplaceList',expandAll: true}"
+								 :edit-config="{
+						                  trigger: 'click',
+						                  mode: 'row',
+						                  showStatus: true,
+						                }"
+								 :header-cell-style="{ background: '#eef1f6', color: '#606266' }">
+
+									<vxe-table-column field="COMPONENT_LOCATION" min-width="200" title="位号" tree-node align="center"></vxe-table-column>
+									<vxe-table-column field="PART_CODE" min-width="200" title="物料料号" align="center"></vxe-table-column>
+									<vxe-table-column field="PART_NAME" min-width="200" title="物料名称" align="center"></vxe-table-column>
+
+									<vxe-table-column field="PART_MODEL" min-width="200" title="物料规格" align="center"></vxe-table-column>
+									<vxe-table-column field="UNIT_QTY" min-width="105" title="单位用量" align="center">
+										<template v-slot:edit="{ row }">
+											<span>{{row.UNIT_QTY}}</span>
+										</template>
+									</vxe-table-column>
+
+									<vxe-table-column field="TEST_VALUE" min-width="130" title="测试值" align="center" :edit-render="{ autofocus: '.custom-input', type: 'visible' }">
+										<template v-slot:edit="{ row }">
+											<vxe-input type="text" v-model="row.TEST_VALUE" placeholder=" " />
+										</template>
+									</vxe-table-column>
+
+									<vxe-table-column field="BRAND_NAME" min-width="130" title="品牌" align="center" :edit-render="{ autofocus: '.custom-input', type: 'visible' }">
+										<template v-slot:edit="{ row }">
+											<vxe-input type="text" v-model="row.BRAND_NAME" placeholder=" " />
+										</template>
+									</vxe-table-column>
+									<vxe-table-column field="TENSION_VALUE" min-width="100" title="供应商" align="center" :edit-render="{ autofocus: '.custom-input', type: 'visible' }">
+										<template v-slot:edit="{ row }">
+											<vxe-input type="text" v-model="row.TENSION_VALUE" placeholder=" " />
+										</template>
+									</vxe-table-column>
+									<vxe-table-column min-width="200" field="RESULT" align="center" title="检查结果" :edit-render="{ autofocus: '.custom-input', type: 'visible' }">
+										<template v-slot:edit="{ row }">
+											<div class="check-switch">
+												<el-switch v-model="row.RESULT" active-text="合格" inactive-text="不合格" active-color="#13ce66" inactive-color="#cccccc"
+												 active-value="Y" inactive-value="N" />
+											</div>
+										</template>
+									</vxe-table-column>
+								</vxe-table>
+							</div>
+						</el-tab-pane>
+					</el-tabs>
+
+
+				</div>
+				<div style="display: flex;" class="order-bottom-cell-button">
+					<el-button icon="el-icon-refresh-left" @tap.native="check_reset_but">重置</el-button>
+					<el-button type="success" icon="el-icon-circle-check" @tap.native="check_shout_but">确定</el-button>
+				</div>
+			</div>
+
+		</div>
+		<script>
+			mui.init({
+
+			})
+		</script>
+		<script>
+			var app = new Vue({
+				el: '#app',
+				data: {
+					tableHeight: '200',
+					// 抽检记录
+					checkText: '',
+					checkVisible: false,
+					checkform: {
+						// ID: 0,
+						MST_ID: 0,
+						RESULT_STATUS: 1,
+						REMARK: '',
+						ItemList: []
+					},
+					checktable: [],
+					activeName: 'first',
+					MaterTable: [],
+					BomForm: {
+						MST_ID: 0,
+						RESULT_STATUS: 0,
+						REMARK: '',
+						ItemList: []
+					},
+					test: true
+
+				},
+				computed: {
+					userinfo: function() {
+						var userinfo = window.localStorage.getItem('Userinfo')
+						userinfo = userinfo ? JSON.parse(userinfo) : {};
+						this.form.CREATOR = userinfo.USER_NAME
+						return userinfo
+					}
+				},
+				methods: {
+					// 重置
+					check_reset_but() {},
+					// 抽检提交
+					check_shout_but() {
+						var cheDate = []
+						let that = this
+						cheDate = this.$refs.xTable.getTableData().tableData
+						var isRES = false
+						cheDate.some((v, i) => {
+							if (
+								(v.ISEMPTY !== 'Y' && v.RESULT_VALUE === null) ||
+								(v.ISEMPTY !== 'Y' && v.RESULT_VALUE === undefined) ||
+								(v.ISEMPTY !== 'Y' && v.RESULT_VALUE === '')
+							) {
+								console.log(v, 'v.CHECK_ITEM')
+								this.$message({
+									showClose: true,
+									type: 'warning',
+									message: '检验项目【' +
+										v.CHECK_ITEM +
+										'】未填写检验结果值！'
+								})
+								isRES = true
+								return true
+							} else {
+								isRES = false
+							}
+						})
+						if (isRES) {
+							return
+						}
+						this.$refs.xTable.validate((valid) => {
+							if (valid) {
+								this.checkform.ItemList = cheDate
+								http({
+									url: 'MesQualityInfo/AddOrModifyDetailSave',
+									method: 'post',
+									params: this.checkform,
+									success: function(res) {
+										if (res.Result) {
+											that.BomDetailSave()
+											that.$notify({
+												title: '成功',
+												message: '提交成功',
+												type: 'success',
+												duration: 2000
+											})
+										}
+									}
+								})
+							}
+						})
+					},
+					async BomDetailSave() {
+						var cheDate = this.$refs.xTable2.getTableData().tableData
+						if (cheDate.length === 0) {
+							return
+						}
+						this.BomForm.MST_ID = this.checkform.MST_ID
+						this.BomForm.RESULT_STATUS = this.checkform.RESULT_STATUS
+						this.BomForm.REMARK = this.checkform.REMARK
+						cheDate.forEach((v) => {
+							v.POSITION = v.COMPONENT_LOCATION
+							v.PART_NO = v.PART_CODE
+							v.HID = this.BomForm.MST_ID
+						})
+						// Spenan
+						console.log('------Spenan------')
+						let ItemList = []
+						var hid = null
+						cheDate.map((item) => {
+							var obj = {}
+							obj.BRAND_NAME = item.BRAND_NAME
+							obj.COMPONENT_LOCATION = item.COMPONENT_LOCATION
+							obj.HID = item.HID
+							obj.ID = item.ID
+							obj.PARENT_PART_NO = item.PARENT_PART_NO
+							obj.PART_CODE = item.PART_CODE
+							obj.PART_MODEL = item.PART_MODEL
+							obj.PART_NAME = item.PART_NAME
+							obj.PART_NO = item.PART_NO
+							obj.POSITION = item.POSITION
+							obj.RESULT = item.RESULT
+							obj.TENSION_VALUE = item.TENSION_VALUE
+							obj.TEST_VALUE = item.TEST_VALUE
+							obj.UNIT_QTY = item.UNIT_QTY
+							obj.VENDOR_NAME = item.VENDOR_NAME
+
+							if (item.HID) {
+								hid = item.HID
+							}
+							ItemList.push(obj)
+							item.ReplaceList && item.ReplaceList.map((itemReplace, indexReplace) => {
+								var temp = {}
+								temp.BRAND_NAME = itemReplace.BRAND_NAME
+								temp.ID = itemReplace.ID
+								temp.PARENT_PART_NO = itemReplace.PARENT_PART_NO
+								temp.PART_NO = itemReplace.PART_CODE
+								temp.PART_MODEL = itemReplace.PART_MODEL
+								temp.PART_NAME = itemReplace.PART_NAME
+								temp.RESULT = itemReplace.RESULT
+								temp.TENSION_VALUE = itemReplace.TENSION_VALUE
+								temp.TEST_VALUE = itemReplace.TEST_VALUE
+								temp.VENDOR_NAME = itemReplace.VENDOR_NAME
+								temp.POSITION = itemReplace.COMPONENT_LOCATION
+								temp.HID = hid
+								ItemList.push(temp)
+							})
+						})
+						this.BomForm.ItemList = ItemList
+						
+						http({
+							url: 'MesQualityInfo/AddOrModifyBomDetailSave',
+							method: 'post',
+							params: this.BomForm,
+							success: function(res) {
+								
+							}
+						})
+						
+					},
+					computedHeight: function() {
+						var that = this
+						window.addEventListener('resize', function() {
+							that.computedHeight()
+						})
+						that.$nextTick(function() {
+							var formHeight = that.$refs.ruleForm.$el.offsetHeight
+							var windowHeight = document.body.clientHeight || document.documentElement.clientHeight
+							that.tableHeight = (windowHeight - 58 - formHeight - 160)
+						})
+					},
+					goBack: function() {
+						var webview = plus.webview.getWebviewById('MesQualityInfo')
+						mui.fire(webview, 'refresh')
+						mui.back()
+					},
+					setForm: function(row) {
+						this.checkform.MST_ID = row.ID
+						// console.log(Object.keys(row).map((item)=>{
+						// 	console.log(item)
+						// }))
+
+					},
+					getAddOrModifyDetail: function() {
+						let that = this
+						http({
+							url: 'MesQualityInfo/AddOrModifyDetail',
+							method: 'get',
+							params: {
+								mstId: this.checkform.MST_ID
+							},
+							success: function(res) {
+								if (res.Result) {
+									that.checktable = res.Result.CheckItems
+									that.checktable.map(v => {
+										v.RESULT_TYPE = v.RESULT_TYPE || 'N'
+									})
+									that.checkform.REMARK = res.Result.RESULT_REMARK || ''
+									that.checkform.RESULT_STATUS = res.Result.RESULT_STATUS || 1
+								}
+							}
+						})
+					},
+					getAddOrModifyBomDetail: function() {
+						let that = this
+						http({
+							url: 'MesQualityInfo/AddOrModifyBomDetail',
+							method: 'get',
+							params: {
+								mstId: this.checkform.MST_ID
+							},
+							success: function(res) {
+								if (res.Result) {
+									var data = res.Result
+									console.log(data, 'res.Resultres.Resultres.Result')
+									that.MaterTable = data.CheckItems
+									that.BomForm.MST_ID = data.MST_ID
+									that.BomForm.RESULT_STATUS = data.RESULT_STATUS
+									that.BomForm.REMARK = data.RESULT_REMARK
+								}
+							}
+						})
+					},
+
+				},
+				created: function() {
+
+				}
+			})
+			mui.plusReady(function(e) {
+				var _selfWebview = plus.webview.currentWebview()
+				app.setForm(_selfWebview)
+				app.computedHeight()
+				app.getAddOrModifyDetail()
+				app.getAddOrModifyBomDetail()
+			})
+			document.addEventListener('refresh', function(e) {
+				console.log("refresh")
+				app.setForm(_selfWebview)
+				app.computedHeight()
+				app.getAddOrModifyDetail()
+				app.getAddOrModifyBomDetail()
+
+			})
+		</script>
+	</body>
+</html>

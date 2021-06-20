@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<script src="../../js/qs.js"></script>
+		<!-- 引入vue -->
+		<script src="../../js/vue.min.js"></script>
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../../css/elementUi.min.css">
+		<!-- 引入组件库 -->
+		<script src="../../js/elementUi.min.js"></script>
+		<script src="../../js/mui.min.js"></script>
+		<link href="../../css/mui.min.css" rel="stylesheet" />
+		<script src="../../js/utils.js"></script>
+		<link rel="stylesheet" type="text/css" href="../../css/updaterPage.css" />
+		<script src="../../js/fastclick.js"></script>
+		<script>
+			if('addEventListener' in document) {
+			     document.addEventListener('DOMContentLoaded',function() {
+			     FastClick.attach(document.body);
+			   },false);
+			}
+		</script>
+	</head>
+	<body>
+		<div class="page" id="app">
+			<!-- <header class="mui-bar mui-bar-nav header-color">
+				<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left" style="color: #409EFF;"></a>
+				<a class="mui-pull-left mui-title custom-title">在线更新</a>
+			</header> -->
+			<img src="../../images/update.png" class="page-background"/>
+			<div class="flex-column mui-content">
+				<div class="content">
+					<div class="infoContentTitle">
+						<span class="title">{{ info }}</span>
+					</div>
+					<span class="line"></span>
+				</div>
+				<div>
+					<div class="infoContentTitle" ><span class="infoTitle">更新内容</span></div>
+					<div class="infoContent" style="width: 100%;padding: 0 25px;">
+						<!-- <span class="updateInfo">{{ updateInfo }}</span> -->
+						<rich-span class="richspan" :nodes="updateInfo"></rich-span>
+					</div>
+				</div>
+				<div style="margin: 0 auto;text-align: center;">
+					<el-button type="primary" @click="handleUpdate()">立即更新</el-button>
+				</div>
+				<div class="minorContent">
+					<div v-if="startProgress && !currentIsLatest" class="smallTitle">
+						<span>下载进度:{{ downloadProgress }}%</span>
+						<el-progress :stroke-width="4" :percentage="downloadProgress" :status="downloadStatus"></el-progress>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script>
+
+		</script>
+		<script>
+			var app = new Vue({
+				el: '#app',
+				data: {
+					info: '正在加载', // 主标题显示版本号
+					updateInfo: '无', // 更新摘要
+
+					latest: null, // 版本信息
+					packgeSize: null, // 更新包大小
+					packgePath: null, // 更新包的文件地址
+					downloadTask: null, // 下载任务
+					downloadProgress: 0, // 下载进度
+
+					buttonLoading: false, // 加载 - 标记
+					installed: false, // 是否执行了安装 - 标记
+					startProgress: false, // 下载进行 - 标记
+					currentIsLatest: true, // 当前版本就是最新版本 - 标记
+					downloadUrl: '', // 下载地址
+					downloadStatus: 'warning'
+				},
+				methods: {
+					installPackge: function() {
+						// 安装更新
+						plus.runtime.install(this.packgePath, {
+							force: true
+						});
+						this.installed = true;
+						// 保存更新记录到stroage，方便下次启动app时删除安装包
+						window.localStorage.setItem('updated', {
+							completed: true,
+							packgePath: this.packgePath
+						})
+						// 判断是否为热更新（判断文件名中是否含有.wgt）
+						if (this.packgePath.match(RegExp(/.wgt/))) {
+							this.installed = false;
+							plus.nativeUI.alert('应用将重启以完成更新', function(e) {
+								plus.runtime.restart();
+							}, '提示')
+						}
+					},
+					// 已经下载了更新包但是没有安装
+					haveDownloaded: function() {
+						var that = this
+						plus.nativeUI.confirm('您已下载更新包，但是还没有完成安装，请问是否要继续安装更新包呢？', function(e) {
+							if (e.index === 0) {
+								that.installPackge();
+							}
+						}, "更新尚未完成", ["确定", "取消"])
+					},
+					// 取得最新版本及其所有信息
+					getLatest: function() {
+						this.info = '正在加载'; // 主标题显示版本号
+						this.updateInfo = '无'; // 更新摘要
+
+						this.buttonLoading = true;
+						this.latest = null;
+
+						var that = this
+
+						var cur_url = 'PADUpgrade/GetUpgradeInfo'
+						http({
+							url: cur_url,
+							method: 'get',
+							params: {},
+							success: function(res) {
+								if (res.Result) {
+									var response = res.Result
+									var srvVer = response.Version
+									var note = response.Note
+									var app_url = response.Url
+
+									that.latest = response;
+									that.buttonLoading = false;
+									that.checkLatest();
+
+								}
+							}
+						})
+
+					},
+					// 检查版本
+					checkLatest: function() {
+						// 当前版本与新版本不符（$current在main.js里）
+						this.currentIsLatest = false;
+						this.Mtip = '发现新版本';
+						this.info = this.latest.Title; //名称 版本号
+						this.updateInfo = this.latest.Note.replace(/br>/g, "<br/>");
+					},
+					// 关闭下载任务
+					closeTask: function() {
+						this.downloadTask.abort();
+						this.downloadTask = null;
+						this.startProgress = false;
+					},
+					// 开始下载任务
+					createTask: function(downloadLink) {
+						var that = this
+						this.downloadProgress = 0;
+						this.startProgress = true;
+
+						this.downloadTask = plus.downloader.createDownload(this.downloadUrl, {
+							method: 'GET'
+						})
+						this.downloadTask.addEventListener('statechanged', function(task, status) {
+							switch (task.state) {
+								case 1:
+									plus.nativeUI.toast('开始下载...')
+									break;
+								case 2:
+									plus.nativeUI.toast('连接到服务器...')
+									break;
+								case 3:
+									that.downloadProgress = ((task.downloadedSize / task.totalSize).toFixed(2) * 100).toFixed(2)
+									break;
+								case 4:
+									plus.io.resolveLocalFileSystemURL(task.filename, function(entry) {
+										that.packgePath = entry.toLocalURL()
+										that.downloadStatus = 'success'
+										console.log('文件绝对地址： ', that.packgePath)
+										plus.nativeUI.confirm('下载完成，是否立即安装？', function(e) {
+											if (e.index === 0) {
+												// TODO 安装
+												that.installPackge()
+												that.downloadTask.close()
+											}
+										}, "确认", ["确定", "取消"])
+									})
+
+							}
+						})
+						this.downloadTask.start()
+					},
+					handleUpdate: function() {
+						// 判断系统类型
+						if (plus.os.name.toLowerCase() === 'android') {
+							if (this.latest.Url && this.latest.Url !== '#') {
+								// 我这里默认#也是没有地址，请根据业务自行修改
+								// 安卓：创建下载任务
+								this.createTask(this.latest.Url);
+							} else {
+								plus.nativeUI.alert('未找到下载地址', function() {}, '提示')
+							}
+						} else {
+							if (this.latest.iosLink && this.latest.iosLink !== '#') {
+								// 我这里默认#也是没有地址，请根据业务自行修改
+								// 苹果(A)：进行热更新（如果iosLink是wgt更新包的下载地址）判断文件名中是否含有.wgt
+								if (this.latest.iosLink.match(RegExp(/.wgt/))) {
+									this.createTask(this.latest.iosLink);
+								} else {
+									// 苹果(B)：打开商店链接（如果iosLink是苹果商店的地址）
+									plus.runtime.openURL(this.latest.iosLink);
+								}
+							} else {
+								plus.nativeUI.alert('未找到ios商店地址', function() {}, '提示')
+							}
+						}
+					}
+				}
+			})
+
+			mui.plusReady(function() {
+				var _selfwebview = plus.webview.currentWebview()
+				app.downloadUrl = _selfwebview.downloadUrl || ''
+				app.getLatest()
+			})
+		</script>
+	</body>
+</html>

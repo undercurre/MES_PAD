@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<script src="../../js/qs.js"></script>
+		<!-- 引入vue -->
+		<script src="../../js/vue.min.js"></script>
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../../css/elementUi.min.css">
+		<link rel="stylesheet" href="../../css/vant.min.css" />
+		<script src="../../js/common.js"></script>
+		<!-- 引入组件库 -->
+		<script src="../../js/elementUi.min.js"></script>
+		<script src="../../js/vant.min.js"></script>
+		<script src="../../js/mui.min.js"></script>
+		<link href="../../css/mui.min.css" rel="stylesheet" />
+		<script src="../../js/utils.js"></script>
+		<link rel="stylesheet" href="../../css/MesProductionPreMst.css">
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../../css/vxe-table-2.9.5.min.css">
+		<!-- 引入脚本 -->
+		<script src="../../js/xe-utils.min.js"></script>
+		<script src="../../js/vxe-table-2.9.5.min.js"></script>
+		<script src="../../js/es5-shim.min.js"></script>
+		<script src="../../js/promise-6.1.0.js"></script>
+		<script src="../../js/fastclick.js"></script>
+		<script>
+			if('addEventListener' in document) {
+			     document.addEventListener('DOMContentLoaded',function() {
+			     FastClick.attach(document.body);
+			   },false);
+			}
+		</script>
+	</head>
+	<body>
+		<div id="app" class="page">
+			<div class="custom-container-full">
+				<div class="custom-container-full__header" ref="header">
+					<div>
+						<div class="custom-container-header">
+							<div class="transform-cx">
+								<div class="cch-block">
+									<el-page-header @back="goBack">
+										<template #content>
+											<el-button type="warning" icon="el-icon-finished" @click="drawer = true" size="small">筛选</el-button>
+											<el-button type="success" icon="el-icon-plus" class="common-top" @tap.native="add_but" size="small">新增</el-button>
+											<!-- <el-button type="primary" icon="el-icon-circle-check" class="common-top" @tap.native="review_but" size="small">审核</el-button>
+											<el-button type="danger" icon="el-icon-close" class="common-top" @tap.native="refuse_but" size="small">拒绝</el-button> -->
+										</template>
+									</el-page-header>
+									<!-- <el-select size="small" v-model="listQuery.KEEP_TYPE" style="width: 200px;margin-left: 10px;" clearable
+									 placeholder="选择保养类型">
+										<el-option v-for="item in section" :key="item.KEEP_TYPE" :label="item.label" :value="item.KEEP_TYPE" />
+									</el-select> -->
+									<!-- <el-button icon="el-icon-back" @tap.native="goBack" size="small">返回</el-button>
+									<el-button type="warning" icon="el-icon-finished" @tap.native="drawer = true" size="small">筛选</el-button>
+									<el-button type="success" icon="el-icon-plus" class="common-top" @tap.native="add_but" size="small">新增</el-button>
+									<el-button type="primary" icon="el-icon-circle-check" class="common-top" @tap.native="review_but" size="small">审核</el-button>
+									<el-button type="danger" icon="el-icon-close" class="common-top" @tap.native="refuse_but" size="small">拒绝</el-button> -->
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="custom-container-full__body" ref="body">
+					<div class="out-table-container" :style="{
+						height: tableHeight
+					}">
+						<van-swipe-cell v-for="dataItem in mainTable" :key="dataItem.MST_NO">
+							<el-card class="box-card" style="margin-bottom: 10px;" @click.native="edit_but(dataItem)">
+								<div slot="header" class="clearfix">
+									<span>点检编号: {{dataItem.KEEP_CODE}}</span>
+									<div style="float: right;">
+										<el-tag v-if="dataItem.KEEP_CHECK_STATUS === 0" type="warning" effect="dark" size="mini">
+											待审核
+										</el-tag>
+										<el-tag v-if="dataItem.KEEP_CHECK_STATUS === 1" type="success" effect="dark" size="mini">
+											已审核
+										</el-tag>
+										<el-tag v-if="dataItem.KEEP_CHECK_STATUS === 3" type="danger" effect="dark" size="mini">
+											拒绝
+										</el-tag>
+										<el-tag v-if="dataItem.KEEP_CHECK_STATUS === 4" type="primary" effect="dark" size="mini">
+											新增
+										</el-tag>
+									</div>
+								</div>
+								<div>
+									<el-row gutter="20">
+										<el-col span="12"><span>线别: {{dataItem.Line_Name}}</span></el-col>
+										<el-col span="12"><span>设备分类: {{dataItem.CATEGORY_Name}}</span></el-col>
+									</el-row>
+									<el-row gutter="20">
+										<el-col span="12"><span>设备名称: {{dataItem.EQUIP_Name}}</span></el-col>
+										<el-col span="12">
+											<template>
+												<span v-if="dataItem.KEEP_TYPE == 0">设备类型: 日保养</span>
+												<span v-if="dataItem.KEEP_TYPE == 1">设备类型: 月保养</span>
+												<span v-if="dataItem.KEEP_TYPE == 2">设备类型: 年保养</span>
+											</template>
+											<!-- <span> 
+												设备类型: 
+												{{dataItem.KEEP_TYPE === 0 ? '日': 
+													dataItem.KEEP_TYPE === 1 ? '月':'年'}}
+												保养
+											</span> -->
+										</el-col>
+									</el-row>
+									<el-row gutter="20">
+										<el-col span="12">
+											<template>
+												<span v-if="dataItem.KEEP_CHECK_STATUS == 0">点检状态: 待审核</span>
+												<span v-if="dataItem.KEEP_CHECK_STATUS == 1">点检状态: 已审核</span>
+												<span v-if="dataItem.KEEP_CHECK_STATUS == 3">点检状态: 拒绝</span>
+												<span v-if="dataItem.KEEP_CHECK_STATUS == 4">点检状态: 新增</span>
+											</template>
+											<!-- <span>
+												点检状态: {{
+													dataItem.KEEP_CHECK_STATUS == 0 ? '待审核' : 
+														dataItem.KEEP_CHECK_STATUS == 1 ? '已审核' :
+															dataItem.KEEP_CHECK_STATUS == 3 ? '拒绝' : 
+																dataItem.KEEP_CHECK_STATUS == 4 ? '新增' : '异常'
+												}}
+											</span> -->
+										</el-col>
+										<el-col :span="12">
+											<span>审核时间:{{dataItem.KEEP_CHECK_TIME}}</span>
+										</el-col>
+									</el-row>
+								</div>
+								<div style="display: flex;justify-content: space-between;border-top: 1px solid #EBEEF5;padding-top: 5px;">
+									<div>点检人:{{dataItem.KEEP_CHECKER}}</div>
+									<div>点检时间:{{dataItem.KEEP_TIME}}</div>
+								</div>
+							</el-card>
+							<template slot="right">
+								<div style="display: flex;flex-flow: column;height: 100%;">
+									<!-- <div style="flex: 1;">
+										<el-button type="primary" @click="editRow(dataItem)" style="height: 100%;width: 100%;border-radius: 0px 4px 0px 0px;">编辑</el-button>
+									</div> -->
+									<div style="height: 100%;flex: 1;display: flex;flex-flow: column;align-items: center;padding-left: 1px;" class="order-left-cell-button">
+										<div style="flex: 1;" v-if="dataItem.KEEP_CHECK_STATUS == 0">
+											<el-button type="primary" @tap.native="review_but(dataItem)" style="width: 100%;height: 100%">审核</el-button>
+										</div>
+										<div style="flex: 1;" v-if="dataItem.KEEP_CHECK_STATUS == 0">
+											<el-button type="danger" @tap.native="refuse_but(dataItem)" style="width: 100%;height: 100%">拒绝</el-button>
+										</div>
+										<div style="flex: 1;" v-if="dataItem.KEEP_CHECK_STATUS !== 0">
+											<el-button type="danger" @tap.native="removeClick(dataItem)" style="width: 100%;height: 100%">删除</el-button>
+										</div>
+									</div>
+								</div>
+							</template>
+						</van-swipe-cell>
+					</div>
+				</div>
+				<div class="custom-container-full__footer" ref="footer">
+					<el-pagination :current-page="listQuery.Page" pager-count="3" :page-size="listQuery.Limit" :page-sizes="[15, 25, 35, 45]"
+					 layout="total, prev, pager, next, jumper" :total="total" @size-change="handleSizeChange" @current-change="handleCurrentChange"></el-pagination>
+				</div>
+				<!-- modal -->
+				<!-- 抽屉 筛选 -->
+				<!-- <el-drawer title="筛选" :visible.sync="drawer" direction="ltr" size="40%">
+					<div style="padding: 0 20px 20px">
+						<el-card class="box-card">
+							<div slot="header" class="clearfix">
+								<span>搜索</span>
+								<el-button style="float: right; padding: 3px 0" type="text" @tap.native="searchClick">确定</el-button>
+								<el-button style="float: right; padding: 3px 0;margin-right: 20px" type="text" @tap.native="resetListQuery">重置</el-button>
+							</div>
+							<el-form class="custom-form" ref="formData" label-position="top" label-width="80px" :model="listQuery" size="mini">
+								<el-form-item label="设备类型">
+									<el-select v-model="listQuery.CATEGORY" style="width: 100%" clearable placeholder=" ">
+										<el-option v-for="item in deviceType" :key="item.LOOKUP_CODE" :label="item.CHINESE" :value="item.LOOKUP_CODE" />
+									</el-select>
+								</el-form-item>
+								<el-form-item label="线别" prop="STATION_ID">
+									<el-select v-model="listQuery.STATION_ID" style="width:100%" clearable placeholder=" ">
+										<el-option v-for="item in LinesList" :key="item.ID" :label="item.LINE_NAME" :value="item.ID" />
+									</el-select>
+								</el-form-item>
+								<el-form-item label="保养类型" prop="KEEP_TYPE">
+									<el-select v-model="listQuery.KEEP_TYPE" style="width:100%" clearable placeholder=" ">
+										<el-option v-for="item in section" :key="item.KEEP_TYPE" :label="item.label" :value="item.KEEP_TYPE" />
+									</el-select>
+								</el-form-item>
+								<el-form-item label="单据状态" prop="KEEP_CHECK_STATUS">
+									<el-select v-model="listQuery.KEEP_CHECK_STATUS" style="width:100%" clearable placeholder=" ">
+										<el-option v-for="item in sort" :key="item.ID" :label="item.SBU_CHINESE" :value="item.ID" />
+									</el-select>
+								</el-form-item>
+								<el-form-item label="点检人" prop="KEEP_USER">
+									<el-input v-model="listQuery.KEEP_USER" style="width:100%" placeholder=" " clearable />
+								</el-form-item>
+							</el-form>
+						</el-card>
+					</div>
+				</el-drawer> -->
+				<van-popup v-model="drawer" round position="bottom">
+					<div style="padding: 20px 20px  4px 20px;display: flex;flex-flow: column;height: 100%;overflow: hidden;">
+						<!-- <el-card class="box-card">
+				  		<div slot="header" class="clearfix">
+				  			<span>搜索</span>
+				  			<el-button style="float: right; padding: 3px 0" type="text" @tap.native="searchClick">确定</el-button>
+				  			<el-button style="float: right; padding: 3px 0;margin-right: 20px" type="text" @tap.native="resetListQuery">重置</el-button>
+				  		</div> -->
+						<el-form style="flex: 1;overflow: auto;" class="custom-form" ref="formData" label-position="left" label-width="80px" :model="listQuery" size="mini">
+							<el-form-item label="设备类型">
+								<!-- <el-select v-model="listQuery.CATEGORY" style="width: 100%" clearable placeholder=" ">
+									<el-option v-for="item in deviceType" :key="item.LOOKUP_CODE" :label="item.CHINESE" :value="item.LOOKUP_CODE" />
+								</el-select> -->
+								<el-input v-model="listQuery.CATEGORY_NAME" readonly clickable @click.native="showCategoryPicker=true" clearable></el-input>
+							</el-form-item>
+							<el-form-item label="线别" prop="STATION_ID">
+								<!-- <el-select v-model="listQuery.STATION_ID" style="width:100%" clearable placeholder=" ">
+									<el-option v-for="item in LinesList" :key="item.ID" :label="item.LINE_NAME" :value="item.ID" />
+								</el-select> -->
+								<el-input v-model="listQuery.STATION_NAME" readonly clickable @click.native="showLinePicker=true" clearable></el-input>
+							</el-form-item>
+							<el-form-item label="保养类型" prop="KEEP_TYPE">
+								<!-- <el-select v-model="listQuery.KEEP_TYPE" style="width:100%" clearable placeholder=" ">
+									<el-option v-for="item in section" :key="item.KEEP_TYPE" :label="item.label" :value="item.KEEP_TYPE" />
+								</el-select> -->
+								<el-input v-model="listQuery.KEEP_TYPE_DESC" readonly clickable @click.native="showKeepTypePicker=true" clearable></el-input>
+							</el-form-item>
+							<el-form-item label="单据状态" prop="KEEP_CHECK_STATUS">
+								<!-- <el-select v-model="listQuery.KEEP_CHECK_STATUS" style="width:100%" clearable placeholder=" ">
+									<el-option v-for="item in sort" :key="item.ID" :label="item.SBU_CHINESE" :value="item.ID" />
+								</el-select> -->
+								<el-input v-model="listQuery.KEEP_CHECK_STATUS_DESC" readonly clickable @click.native="showKeepCheckStatusPicker=true" clearable></el-input>
+							</el-form-item>
+							<el-form-item label="点检人" prop="KEEP_USER">
+								<el-input v-model="listQuery.KEEP_USER" style="width:100%" placeholder=" " clearable />
+							</el-form-item>
+						</el-form>
+						<!-- </el-card> -->
+						<el-row gutter="0" style="margin-top: 10px;">
+							<el-col span="12"><el-button type="primary" @click="searchClick" style="width:100%;border-radius: 4px 0px 0px 4px;">搜索</el-button></el-col>
+							<el-col span="12"><el-button type="danger" @click="resetListQuery" style="width:100%;border-radius: 0px 4px 4px 0px;">重置</el-button></el-col>
+						</el-row>
+					</div>
+				</van-popup>
+				<van-popup v-model="showCategoryPicker" round position="bottom">
+				  <van-picker
+				    show-toolbar
+				    :columns="deviceType"
+					value-key="CHINESE"
+					title="线别"
+					item-height="40"
+					visible-item-count="10"
+				    @cancel="showCategoryPicker = false"
+					@confirm="dealCategoryPicker"
+				  />
+				</van-popup>
+				<van-popup v-model="showLinePicker" round position="bottom">
+				  <van-picker
+				    show-toolbar
+				    :columns="LinesList"
+					value-key="LINE_NAME"
+					title="线别"
+					item-height="40"
+					visible-item-count="10"
+				    @cancel="showLinePicker = false"
+					@confirm="dealLinePicker"
+				  />
+				</van-popup>
+				<van-popup v-model="showKeepTypePicker" round position="bottom">
+				  <van-picker
+				    show-toolbar
+				    :columns="section"
+					value-key="label"
+					title="保养类型"
+					item-height="40"
+					visible-item-count="10"
+				    @cancel="showKeepTypePicker = false"
+					@confirm="dealKeepTypePicker"
+				  />
+				</van-popup>
+				<van-popup v-model="showKeepCheckStatusPicker" round position="bottom">
+				  <van-picker
+				    show-toolbar
+				    :columns="sort"
+					value-key="SBU_CHINESE"
+					title="单据状态"
+					item-height="40"
+					visible-item-count="10"
+				    @cancel="showKeepCheckStatusPicker = false"
+					@confirm="dealKeepCheckStatusPicker"
+				  />
+				</van-popup>
+			</div>
+		</div>
+		<script>
+			mui.init({
+				// preloadPages: [ // 页面预加载
+				// 	{
+				// 		url: '/pages/modifyEquipKeep/index.html',
+				// 		id: 'modifyEquipKeep'
+				// 	}
+				// ],
+				// pullRefresh: {
+				// 	container: '#app',
+				// 	down: {
+				// 		style: 'circle', //必选，下拉刷新样式，目前支持原生5+ ‘circle’ 样式
+				// 		color: '#2BD009', //可选，默认“#2BD009” 下拉刷新控件颜色
+				// 		height: '50px', //可选,默认50px.下拉刷新控件的高度,
+				// 		range: '100px', //可选 默认100px,控件可下拉拖拽的范围
+				// 		offset: '0px', //可选 默认0px,下拉刷新控件的起始位置
+				// 		auto: false, //可选,默认false.首次加载自动上拉刷新一次
+				// 		callback: function() {
+				// 			app.resetListQuery()
+				// 			app.computedTableHeight()
+				// 			app.getIndex(true)
+				// 		} //必选，刷新函数，根据具体业务来编写，比如通过ajax从服务器获取新数据；
+				// 	}
+				// }
+			});
+		</script>
+		<script>
+			var app = new Vue({
+				el: '#app',
+				data: {
+					listLoading: false,
+					tableHeight: '200px',
+					deviceType: [],
+					section: [{
+							KEEP_TYPE: 0,
+							label: '日保养'
+						},
+						{
+							KEEP_TYPE: 1,
+							label: '月保养'
+						},
+						{
+							KEEP_TYPE: 2,
+							label: '年保养'
+						}
+					],
+					LinesList: [],
+					sort: [{
+							ID: '0',
+							SBU_CHINESE: '待审核'
+						},
+						{
+							ID: '1',
+							SBU_CHINESE: '已审核'
+						},
+						{
+							ID: '3',
+							SBU_CHINESE: '拒绝'
+						},
+						{
+							ID: '4',
+							SBU_CHINESE: '新增'
+						}
+					],
+					sectionval: '',
+					lineval: '',
+					sortval: '',
+					productval: '',
+					value2: '',
+					total: 0,
+					listQuery: {
+						Page: 1, // 当前页
+						Limit: 15, // 分页大小
+						Key: null, // 搜索关键字
+						KEEP_USER: '',
+						CATEGORY: '',
+						CATEGORY_NAME:'',
+						STATION_ID: '',
+						STATION_NAME:'',
+						KEEP_TYPE: '',
+						KEEP_TYPE_DESC:'',
+						KEEP_CHECK_STATUS: '',
+						KEEP_CHECK_STATUS_DESC:'',
+						create_begin: '',
+						create_end: ''
+					},
+					selected: '',
+					tableval: [],
+					radio: '',
+					reviewVal: {
+						ID: '',
+						Operator: ''
+					},
+					passing: {
+						ID: 0,
+						KEEP_CHECK_STATUS: 4
+					},
+					drawer: false,
+					mainTable: [],
+					showCategoryPicker:false,
+					showLinePicker:false,
+					showKeepTypePicker:false,
+					showKeepCheckStatusPicker:false
+				},
+				computed: {
+					userinfo: function() {
+						var userinfo = window.localStorage.getItem('Userinfo')
+						userinfo = userinfo ? JSON.parse(userinfo) : {};
+						return userinfo
+					}
+				},
+				methods: {
+					resetListQuery: function() {
+						this.listQuery = {
+							Page: 1, // 当前页
+							Limit: 10, // 分页大小
+							Key: null, // 搜索关键字
+							KEEP_USER: '',
+							CATEGORY: '',
+							STATION_ID: '',
+							KEEP_TYPE: '',
+							KEEP_CHECK_STATUS: '',
+							create_begin: '',
+							create_end: ''
+						}
+						this.getLoadData()
+					},
+					goBack: function() {
+						mui.back()
+					},
+					// 获取下拉菜单
+					getIndex: function(isPullFresh) {
+						var that = this
+						http({
+							url: 'SfcsEquipKeep/Index',
+							method: 'get',
+							params: {},
+							success: function(res) {
+								if (res.Result) {
+									var data = res.Result
+									that.deviceType = data.CategoryList
+									that.LinesList = data.LinesList
+									that.getLoadData(isPullFresh)
+								}
+							}
+						})
+					},
+					// 获取用户列表
+					getLoadData: function(isPullFresh) {
+						var that = this
+						that.listLoading = true
+						http({
+							url: 'SfcsEquipKeep/LoadData',
+							method: 'get',
+							params: that.listQuery,
+							success: function(res) {
+								if (isPullFresh) {
+									mui('#app').pullRefresh().endPulldown()
+								}
+								that.listLoading = false
+								if (res.Result) {
+									var data = JSON.parse(res.Result)
+									that.mainTable = data
+									that.total = res.TotalCount
+								}
+							},
+							error: function() {
+								if (isPullFresh) {
+									mui('#app').pullRefresh().endPulldown()
+								}
+								that.listLoading = false
+							}
+						})
+					},
+					handleSizeChange: function(val) {
+						this.listQuery.Limit = val
+						this.getLoadData()
+					},
+					handleCurrentChange: function(val) {
+						this.listQuery.Page = val
+						this.getLoadData()
+					},
+					searchClick: function() {
+						this.listQuery.Page = 1
+						this.getLoadData()
+						this.drawer = false
+					},
+					computedTableHeight: function() {
+						var windowHeight = document.body.clientHeight || document.documentElement.clientHeight
+						this.tableHeight = (windowHeight - 57 - 54 - 5 - 10) + 'px'
+					},
+					// 添加
+					add_but: function() {
+						var webview = plus.webview.getWebviewById('modifyEquipKeep')
+						if (webview) {
+							mui.fire(webview, 'refresh', {
+								ID: 0,
+								KEEP_CHECK_STATUS: 4
+							})
+							webview.show()
+						} else {
+							href('/pages/modifyEquipKeep/index.html', 'modifyEquipKeep', {
+								ID: 0,
+								KEEP_CHECK_STATUS: 4
+							})
+						}
+					},
+					// 编辑
+					edit_but: function(e) {
+						// if (this.tableval.length === 0) {
+						// 	plus.nativeUI.toast('请选择要编辑的数据行')
+						// 	tips('error')
+						// 	return false
+						// }
+						this.passing.ID = e.ID
+						this.passing.KEEP_CHECK_STATUS = e.KEEP_CHECK_STATUS
+						var webview = plus.webview.getWebviewById('modifyEquipKeep')
+						console.log(JSON.stringify(this.passing))
+						if (webview) {
+							mui.fire(webview, 'refresh', this.passing)
+							webview.show()
+						} else {
+							href('/pages/modifyEquipKeep/index.html', 'modifyEquipKeep', this.passing)
+						}
+					},
+					removeClick: function(row) {
+						var that = this
+						if (row) {
+							plus.nativeUI.confirm('确定要删除该记录吗？', function(e) {
+								if(e.index !== 0){
+									return;
+								}
+								http({
+									url: 'SfcsEquipKeep/Delete?id=' + row.ID,
+									params: {},
+									method: 'post',
+									success: function(res) {
+										if (res.Result) {
+											// that.$refs.xTable.remove(row)
+											that.getLoadData()
+											tips('success')
+											plus.nativeUI.alert("删除成功", function(e) {
+						
+											}, '成功')
+										}
+									}
+								})
+							}, "警告", ["确定", "取消"])
+						}
+					},
+					// 点击获取表格一行数据
+					openDetails: function(row, column, event) {
+						this.tableval = row
+						this.radio = this.LoadData.indexOf(row)
+					},
+					// 审核
+					review_but: function(e) {
+						var that = this
+						that.reviewVal.ID = e.ID
+						that.reviewVal.Operator = that.userinfo.USER_NAME
+						http({
+							url: 'SfcsEquipKeep/CheckBill',
+							method: 'post',
+							params: that.reviewVal,
+							success: function(res) {
+								if (res.Result !== void(0)) {
+									if (res.Result) {
+										that.getLoadData()
+										plus.nativeUI.alert('审核成功', function() {}, '成功')
+										tips('success')
+									} else {
+										plus.nativeUI.alert('审核失败', function() {}, '失败')
+										tips('error')
+									}
+								}
+							}
+						})
+					},
+					// 拒绝
+					refuse_but: function(e) {
+						var that = this
+						plus.nativeUI.confirm('确定要拒绝？', function() {
+								// TODO 拒绝
+								that.reviewVal.ID = e.ID
+								that.reviewVal.Operator = that.userinfo.USER_NAME
+								http({
+									url: 'SfcsEquipKeep/RejectBill',
+									method: 'post',
+									params: that.reviewVal,
+									success: function(res) {
+										if (res.Result !== void(0)) {
+											if (res.Result) {
+												that.getLoadData()
+												plus.nativeUI.alert('拒绝成功', function() {}, '成功')
+												tips('success')
+											} else {
+												plus.nativeUI.alert('拒绝失败', function() {}, '成功')
+												tips('error')
+											}
+										}
+									}
+								})
+							
+						}, "确认", ["确定", "取消"])
+					},
+					//处理选择
+					dealCategoryPicker:function(dataItem){
+						this.listQuery.CATEGORY = dataItem.LOOKUP_CODE
+						this.listQuery.CATEGORY_NAME = dataItem.CHINESE
+						this.showCategoryPicker = false
+					},
+					dealLinePicker:function(dataItem){
+						this.listQuery.STATION_ID = dataItem.LINE_ID
+						this.listQuery.STATION_NAME = dataItem.LINE_NAME
+						this.showLinePicker = false
+					},
+					dealKeepTypePicker:function(dataItem){
+						this.listQuery.KEEP_TYPE = dataItem.KEEP_TYPE
+						this.listQuery.KEEP_TYPE_DESC = dataItem.label
+						this.showKeepTypePicker = false
+					},
+					dealKeepCheckStatusPicker:function(dataItem){
+						this.listQuery.KEEP_CHECK_STATUS = dataItem.ID
+						this.listQuery.KEEP_CHECK_STATUS_DESC = dataItem.SBU_CHINESE
+						this.showKeepCheckStatusPicker = false
+					},
+				},
+				created: function() {
+
+				}
+			})
+			mui.plusReady(function() {
+				app.computedTableHeight()
+				app.getIndex()
+			})
+			document.addEventListener('refresh', function(e) {
+				app.resetListQuery()
+				app.computedTableHeight()
+				app.getIndex()
+			})
+		</script>
+	</body>
+</html>

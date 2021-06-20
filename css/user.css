@@ -1,0 +1,142 @@
+html,
+body {
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+
+#app {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-flow: column;
+	overflow: hidden;
+}
+
+.page-header {
+	height: 45px;
+	padding: 0px 10px;
+	background: linear-gradient(#393939, #000000);
+	color: #fff;
+	align-items: center;
+}
+
+.el-page-header__content {
+	color: #fff;
+}
+
+#page {
+	flex: 1;
+	/* background: line-gradient(to bottom right, #f7f7f7, #e0e0e0); */
+	background-color: #ccc;
+	display: flex;
+	flex-flow: column;
+}
+
+#page>.top {
+	height: 300px;
+}
+
+#page>.top>.picture-area {
+	width: 100%;
+	height: 300px;
+	-webkit-filter: blur(2px);
+	-moz-filter: blur(2px);
+	-o-filter: blur(2px);
+	-ms-filter: blur(2px);
+	filter: blur(2px);
+	border-bottom: #e0e0e0 1px solid;
+	position: absolute;
+}
+
+#page>.bottom {
+	flex: 1;
+	display: flex;
+	padding: 0px 10px 0px 10px;
+	margin: 2px;
+	margin-top: -20px;
+	background: #f1f1f1;
+	z-index: 999999;
+	position: relative;
+}
+
+#page>.bottom>.user-photo {
+	width: calc(100% - 24px);
+	height: 150px;
+	margin-top: -255px;
+	display: flex;
+	justify-content: center;
+	position: absolute;
+}
+
+#page>.bottom>.user-photo>img {
+	width: 150px;
+	height: 150px;
+	border-radius: 50%;
+}
+
+#page>.bottom>.user-name {
+	width: calc(100% - 24px);
+	height: 150px;
+	margin-top: -80px;
+	display: flex;
+	justify-content: center;
+	position: absolute;
+	font-size: 24px;
+	color: #f1f1f1;
+	text-shadow: 0 -1px 0px #000;
+
+}
+
+#page>.bottom>.user-op {
+	width: 90%;
+	height: 41px;
+	margin-left: 15px;
+	background-color: #f1f1f1;
+	position: absolute;
+	margin-top: -40px;
+	border-radius: 15px 15px 0px 0px;
+	display: flex;
+}
+
+#page>.bottom>.user-op>.user-op-separator {
+	width: 0px;
+	background-color: #CCCCCC;
+	margin: 6px 0px;
+}
+
+#page>.bottom>.user-op>div:not(.user-op-separator) {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 16px;
+	color: #282828;
+	text-shadow: 0 -1px 0px #ccc;
+	background-color: #ccc;
+}
+
+#page>.bottom>.user-op>div:not(.user-op-separator):first-child {
+	border-radius: 15px 0px 0px 0px;
+}
+
+#page>.bottom>.user-op>div:not(.user-op-separator):last-child {
+	border-radius: 0px 15px 0px 0px;
+}
+
+#page>.bottom>.user-op>div:not(.user-op-separator).k-state-actived {
+	background-color: #f1f1f1;
+}
+
+#page>.bottom>.left {
+	flex: 1;
+	padding-top: 20px;
+}
+
+.van-cell-group {
+	background: none;
+}
+
+.van-cell {
+	background: none;
+}

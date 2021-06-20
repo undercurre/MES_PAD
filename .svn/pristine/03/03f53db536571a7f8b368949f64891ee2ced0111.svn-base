@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<script src="../../js/qs.js"></script>
+		<!-- 引入vue -->
+		<script src="../../js/vue.min.js"></script>
+		<script src="../../js/common.js"></script>
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../../css/elementUi.min.css">
+		<!-- 引入组件库 -->
+		<script src="../../js/elementUi.min.js"></script>
+		<script src="../../js/mui.min.js"></script>
+		<link href="../../css/mui.min.css" rel="stylesheet" />
+		<script src="../../js/utils.js"></script>
+		<link rel="stylesheet" href="../../css/MesProductionPreMst.css">
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../../css/vxe-table-2.9.5.min.css">
+		<!-- 引入脚本 -->
+		<script src="../../js/xe-utils.min.js"></script>
+		<script src="../../js/vxe-table-2.9.5.min.js"></script>
+		<script src="../../js/es5-shim.min.js"></script>
+		<script src="../../js/promise-6.1.0.js"></script>
+		<script src="../../js/fastclick.js"></script>
+		<style>
+			/** 全局 dialog header 样式  */
+			.el-dialog__header {
+			  background: rgb(236, 241, 246);
+			}
+			.el-dialog__header .el-dialog__title {
+			  color: #606266;
+			}
+			.el-dialog__body {
+				padding: 10px 20px;
+			}
+			.custom-dialog .el-dialog {
+				margin-top: 5vh!important;
+				margin: 0 auto 0;
+			}
+			.custom-dialog-x .el-dialog {
+				margin-top: 3vh!important;
+				margin: 0 auto 0;
+			}
+			.showRdio .el-radio__label {
+				display: inline;
+			}
+		</style>
+		<script>
+			if('addEventListener' in document) {
+			     document.addEventListener('DOMContentLoaded',function() {
+			     FastClick.attach(document.body);
+			   },false);
+			}
+		</script>
+	</head>
+	<body>
+		<div class="page" id="app" v-cloak>
+			<div class="custom-container-full">
+				<div class="custom-container-full__header" ref="header">
+					<div>
+						<div class="custom-container-header">
+							<div class="transform-cx">
+								<div class="cch-block">
+									<el-button icon="el-icon-back" @tap.native="goBack" size="small" style="margin-right: 10px;">返回</el-button>
+									<!-- <el-select v-model="listQuery.LINE_ID" placeholder="请选择线别" style="width: 150px" filterable clearable size="small">
+										<el-option :value="0" label="全部线别"></el-option>
+										<el-option v-for="item in Categ" :key="item.ID" :label="item.LINE_NAME" :value="item.ID"></el-option>
+									</el-select>
+									<el-select v-model="listQuery.STATUS" class="filter-item" style="width:150px" filterable clearable size="small">
+										<el-option v-for="item in statusList" :key="item.ID" :label="item.LINE_NAME" :value="item.ID"></el-option>
+									</el-select>
+									<el-input v-model="listQuery.WO_NO" placeholder="请输入工单号" style="width:150px" size="small"></el-input>
+									<el-select v-model="listQuery.RESULT" class="filter-item" style="width:150px" filterable clearable size="small">
+										<el-option v-for="item in typeOptions" :key="item.STATUS" :label="item.display_name" :value="item.STATUS"></el-option>
+									</el-select>
+									<el-button type="primary" icon="el-icon-search" @tap.native="searchClick" size="small">搜索</el-button> -->
+									<el-button type="warning" icon="el-icon-finished" @click="drawer = true" size="small">筛选</el-button>
+									<el-button type="success" icon="el-icon-plus" @tap.native="add_but" size="small">新增</el-button>
+									<el-button type="warning" icon="el-icon-check" @tap.native="reviewClick" size="small">审核</el-button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="custom-container-full__body" ref="body">
+					<div class="out-table-container" :style="{
+						height: tableHeight
+					}">
+						<vxe-table ref="xTable" border resizable height="100%" size="medium" align="center" highlight-hover-row
+						 highlight-current-row show-overflow auto-resize keep-source stripe :loading="Loading" :data="mainTable"
+						 :radio-config="{labelField: 'name', trigger: 'row'}" @radio-change="openDetails">
+							<!-- <vxe-table-column min-width="180" title="选择">
+								<template slot-scope="scope">
+									{{ scope.$index }}
+									
+									<el-radio v-model="radio" class="radio" :label="scope.$index" ></el-radio>
+								</template>
+							</vxe-table-column> -->
+							<vxe-table-column type="radio" width="60"></vxe-table-column>
+							<vxe-table-column field="BATCH_NO" min-width="180" title="批次号"></vxe-table-column>
+							<vxe-table-column field="LINE_NAME" min-width="180" title="产线"></vxe-table-column>
+							<vxe-table-column field="WO_NO" min-width="180" title="工单"></vxe-table-column>
+							<vxe-table-column field="STATUS" min-width="180" title="状态">
+								<template slot-scope="scope">
+									<span v-if="scope.row.STATUS == 0" style="font-weight:800;color:orange">初始</span>
+									<span v-if="scope.row.STATUS == 3" style="font-weight:800;color:blue">已审核</span>
+								</template>
+							</vxe-table-column>
+							<vxe-table-column field="PART_NO" min-width="180" title="料号"></vxe-table-column>
+							<vxe-table-column field="PART_NAME" min-width="180" title="品名"></vxe-table-column>
+							<vxe-table-column field="PART_DESC" min-width="180" title="规格"></vxe-table-column>
+							<vxe-table-column field="ALL_QTY" min-width="120" title="送检数"></vxe-table-column>
+							<vxe-table-column field="CHECK_QTY" min-width="150" title="抽检数"></vxe-table-column>
+							<vxe-table-column field="FAIL_QTY" min-width="180" title="不良数"></vxe-table-column>
+							<vxe-table-column field="CHECKER" min-width="180" title="检验员"></vxe-table-column>
+							<vxe-table-column field="AUDITOR" min-width="180" title="审核人"></vxe-table-column>
+							<vxe-table-column field="RESULT" min-width="180" title="抽检结果">
+								<template slot-scope="scope">
+									<span v-if="scope.row.RESULT == 0" style="font-weight:800;color:green">合格</span>
+									<span v-if="scope.row.RESULT == 1" style="font-weight:800;color:blue">特采</span>
+									<span v-if="scope.row.RESULT == 2" style="font-weight:800;color:orange">返工</span>
+									<span v-if="scope.row.RESULT == 3" style="font-weight:800;color:red">报废</span>
+								</template>
+							</vxe-table-column>
+							<vxe-table-column title="操作" width="250" align="center" fixed="right">
+								<template v-slot="scoped">
+									<el-button type="primary" @tap.native="edit_but(scoped.row)" size="small">编辑</el-button>
+									<el-button type="danger" @tap.native="remove_but(scoped.row)" size="small">删除</el-button>
+									<el-button type="success" @tap.native="Spotcheck_but(scoped.row)" size="small">抽检记录</el-button>
+								</template>
+							</vxe-table-column>
+						</vxe-table>
+					</div>
+					<div style="padding: 5px 0;">
+						<el-pagination :current-page="listQuery.Page" :page-size="listQuery.Limit" :page-sizes="[15, 25, 35, 45]" layout="total, sizes, prev, pager, next, jumper"
+						 :total="total" @size-change="handleSizeChange" @current-change="handleCurrentChange" />
+					</div>
+					<!-- next table -->
+					<div style="height: 200px;">
+						<vxe-table ref="_xTable" border resizable height="100%" size="medium" align="center" highlight-hover-row
+						 highlight-current-row show-overflow auto-resize keep-source stripe :loading="childLoading" :data="childTable"
+						 :mouse-config="{selected: true}" :radio-config="{labelField: 'name', trigger: 'row'}" :checkbox-config="{checkField: 'checked', trigger: 'row'}">
+							<vxe-table-column min-width="180" title="序号">
+
+							</vxe-table-column>
+							<vxe-table-column field="SN" min-width="180" title="产品流水号"></vxe-table-column>
+							<vxe-table-column field="STATUS" min-width="180" title="抽检状态">
+								<template slot-scope="scope">
+									<span v-if="scope.row.STATUS == 'PASS'" style="font-weight:800;color:red">异常</span>
+									<span v-if="scope.row.STATUS == 'FAIL'" style="font-weight:800;color:green">正常</span>
+								</template>
+							</vxe-table-column>
+							<vxe-table-column field="DEFECT_CODE" min-width="180" title="不良代码"></vxe-table-column>
+							<vxe-table-column field="DEFECT_LOC" min-width="180" title="不良位号"></vxe-table-column>
+							<vxe-table-column field="DEFECT_DESCRIPTION" min-width="180" title="不良描述"></vxe-table-column>
+							<vxe-table-column field="DEFECT_MSG" min-width="180" title="不良想象"></vxe-table-column>
+							<vxe-table-column field="CREATE_TIME" min-width="180" title="抽检时间"></vxe-table-column>
+							<vxe-table-column field="CREATOR" min-width="180" title="抽检人"></vxe-table-column>
+							<vxe-table-column field="ENABLED" min-width="180" title="操作" fixed="right">
+								<template slot-scope="scope">
+									<el-button type="success" size="small" @tap.native="child_edit_but(scope.row)">编辑</el-button>
+									<el-button type="danger" size="small" @tap.native="child_remove_but(scope.row)">删除</el-button>
+								</template>
+							</vxe-table-column>
+						</vxe-table>
+					</div>
+				</div>
+				<!-- 主表添加、编辑 -->
+				<el-dialog width="65%" :title="addorediText" :visible.sync="innerVisible" append-to-body class="call-dialog"
+				 :close-on-click-modal="false">
+					<el-form ref="form" :show-message="false" :model="form" :rules="rules" label-width="80px" size="mini">
+						<el-row :gutter="24">
+							<el-col :span="12">
+								<el-form-item label="产线" prop="LINE_ID">
+									<el-select v-model="form.LINE_ID" style="width:100%">
+										<el-option :value="''" label="请选择线别"></el-option>
+										<el-option v-for="item in Categ" :key="item.ID" :label="item.LINE_NAME" :value="item.ID"></el-option>
+									</el-select>
+								</el-form-item>
+								<el-form-item label="料号" prop="PART_NO">
+									<el-input v-model="form.PART_NO" placeholder="料号(自动带出)"></el-input>
+								</el-form-item>
+								<el-form-item label="送检数" prop="ALL_QTY">
+									<el-input v-model="form.ALL_QTY" min="1" type="number" placeholder="请输入送检数"></el-input>
+								</el-form-item>
+							</el-col>
+							<el-col :span="12">
+								<!-- @keyup.enter.native="WorkOrder" -->
+								<el-form-item label="工单" prop="WO_NO">
+									<div style="display: flex;align-items: center;">
+										<el-input v-model="form.WO_NO" placeholder="请输入工单号" @change="WorkOrder"></el-input>
+										<div @tap="openBarcode('form', 'WO_NO')">
+											<img src="../../images/saoma.png" alt="saoma" class="saoma-icon">
+										</div>
+									</div>
+								</el-form-item>
+								<el-form-item label="品名" prop="PART_NAME">
+									<el-input v-model="form.PART_NAME" placeholder="品名(自动带出)"></el-input>
+								</el-form-item>
+								<el-form-item label="抽检数" prop="CHECK_QTY">
+									<el-input v-model="form.CHECK_QTY" min="1" type="number" placeholder="请输入抽检数"></el-input>
+								</el-form-item>
+							</el-col>
+							<el-col :span="24">
+								<el-form-item label="规格" prop="PART_DESC">
+									<el-input v-model="form.PART_DESC" placeholder="规格(自动带出)"></el-input>
+								</el-form-item>
+							</el-col>
+						</el-row>
+						<div style="text-align: center;padding: 10px 0;">
+							<el-button type="success" @tap.native="shout_but('form')" size="small">确定</el-button>
+							<el-button @tap.native="reset_but" size="small">重置</el-button>
+						</div>
+					</el-form>
+				</el-dialog>
+				<!-- 审核 -->
+				<el-dialog title="审核抽检单" width="80%" :visible.sync="reviewVisible" :close-on-click-modal="false">
+					<el-form size="mini">
+						<el-form-item label="抽检结果">
+							<el-radio-group v-model="reviewForm.ResultStatus">
+								<el-radio class="showRdio" v-model="reviewForm.ResultStatus" :label="0">
+									<span style="font-weight:800;color:green;">合格</span>
+								</el-radio>
+								<el-radio class="showRdio" v-model="reviewForm.ResultStatus" :label="1">
+									<span style="font-weight:800;color:blue">特采</span>
+								</el-radio>
+								<el-radio class="showRdio" v-model="reviewForm.ResultStatus" :label="2">
+									<span style="font-weight:800;color:orange">返工</span>
+								</el-radio>
+								<el-radio class="showRdio" v-model="reviewForm.ResultStatus" :label="3">
+									<span style="font-weight:800;color:red">报废</span>
+								</el-radio>
+							</el-radio-group>
+						</el-form-item>
+						<el-form-item align="center">
+							<el-button type="primary" @click="ReviewSubmit">确定</el-button>
+							<el-button @click="reviewVisible=false">取消</el-button>
+						</el-form-item>
+					</el-form>
+				</el-dialog>
+				<!-- 抽屉 筛选 -->
+				<el-drawer title="筛选" :visible.sync="drawer" direction="ltr" size="40%">
+					<div style="padding: 0 20px 20px">
+						<el-card class="box-card">
+							<div slot="header" class="clearfix">
+								<span>搜索</span>
+								<el-button style="float: right; padding: 3px 0" type="text" @tap.native="searchClick">确定</el-button>
+								<el-button style="float: right; padding: 3px 0;margin-right: 20px" type="text" @tap.native="resetListQuery">重置</el-button>
+							</div>
+							<el-form class="custom-form" ref="formData" label-position="top" label-width="80px" :model="listQuery" size="mini">
+								<el-form-item label="线别" prop="LINE_ID">
+									<el-select v-model="listQuery.LINE_ID" placeholder=" " style="width: 100%" filterable clearable size="mini">
+										<el-option :value="0" label="全部线别"></el-option>
+										<el-option v-for="item in Categ" :key="item.ID" :label="item.LINE_NAME" :value="item.ID"></el-option>
+									</el-select>
+								</el-form-item>
+								<el-form-item label="状态" prop="STATUS">
+									<el-select v-model="listQuery.STATUS" class="filter-item" style="width:100%" filterable clearable size="mini">
+										<el-option v-for="item in statusList" :key="item.ID" :label="item.LINE_NAME" :value="item.ID"></el-option>
+									</el-select>
+								</el-form-item>
+								<el-form-item label="工单号" prop="WO_NO">
+									<div style="display: flex;align-items: center;">
+										<el-input v-model="listQuery.WO_NO" placeholder=" " style="width:100%" size="mini"></el-input>
+										<div @tap="openBarcode('listQuery', 'WO_NO')">
+											<img src="../../images/saoma.png" alt="saoma" class="saoma-icon">
+										</div>
+									</div>
+								</el-form-item>
+								<el-form-item label="结果" prop="RESULT">
+									<el-select v-model="listQuery.RESULT" class="filter-item" style="width:100%" filterable clearable size="small">
+										<el-option v-for="item in typeOptions" :key="item.STATUS" :label="item.display_name" :value="item.STATUS"></el-option>
+									</el-select>
+								</el-form-item>
+							</el-form>
+						</el-card>
+					</div>
+				</el-drawer>
+				<!-- 抽检记录 -->
+				<el-dialog width="40%" :title="checkText" :visible.sync="checkVisible" append-to-body class="custom-dialog-x"
+				 :close-on-click-modal="false">
+					<el-form label-width="90px" class="custom-form" label-position="top" :model="checkform" :show-message="false" size="mini">
+						<el-form-item label="产品流水号" prop="SN">
+							<div style="display: flex;align-items: center;">
+								<el-input v-model="checkform.SN" placeholder=" "></el-input>
+								<div @tap="openBarcode('checkform', 'SN')">
+									<img src="../../images/saoma.png" alt="saoma" class="saoma-icon">
+								</div>
+							</div>
+						</el-form-item>
+						<el-form-item label="抽检状态" prop="STATUS">
+							<el-radio class="showRdio" v-model="checkform.STATUS" label="FAIL">正常</el-radio>
+							<el-radio class="showRdio" v-model="checkform.STATUS" label="PASS">异常</el-radio>
+						</el-form-item>
+						<div v-if="checkform.STATUS == 'PASS'">
+							<el-form-item label="不良代码" prop="DEFECT_CODE">
+								<el-input v-model="checkform.DEFECT_CODE" readonly placeholder=" " @focus="defect_but"></el-input>
+							</el-form-item>
+							<el-form-item label="不良位号" prop="checkform.DEFECT_LOC">
+								<el-input v-model="checkform.DEFECT_LOC" placeholder=""></el-input>
+							</el-form-item>
+							<el-form-item label="不良描述" prop="DEFECT_DESCRIPTION">
+								<el-input v-model="checkform.DEFECT_DESCRIPTION" readonly placeholder=" "></el-input>
+							</el-form-item>
+							<el-form-item label="不良现象" prop="DEFECT_MSG">
+								<el-input v-model="checkform.DEFECT_MSG" placeholder=""></el-input>
+							</el-form-item>
+						</div>
+						<div class="call-dialog-button">
+							<el-button type="success" @click="check_shout_but" size="small">&nbsp;确定&nbsp;</el-button>
+							<el-button @click="check_reset_but" size="small">&nbsp;重置&nbsp;</el-button>
+						</div>
+					</el-form>
+					<!--  -->
+					<el-dialog width="90%" title="选择不良信息" :visible.sync="badVisible" append-to-body
+					 :close-on-click-modal="false" class="custom-dialog">
+						<div class="header-container" style="padding-bottom: 10px;">
+							<el-select v-model="fectVal.DEFECT_TYPE" class="filter-item" style="width:150px" placeholder="请选择不良类型" size="small">
+								<el-option :value="0" label="所有不良类型" ></el-option>
+								<el-option v-for="item in TypeList" :key="item.LOOKUP_CODE" :label="item.CHINESE" :value="item.LOOKUP_CODE" ></el-option>
+							</el-select>
+							<el-select v-model="fectVal.DEFECT_CLASS" class="filter-item" style="width:150px" placeholder="请选择不良种类" size="small">
+								<el-option :value="0" label="所有不良种类" ></el-option>
+								<el-option v-for="item in ClassList" :key="item.LOOKUP_CODE" :label="item.CHINESE" :value="item.LOOKUP_CODE" ></el-option>
+							</el-select>
+							<el-select v-model="fectVal.DEFECT_CATEGORY" class="filter-item" style="width:150px" placeholder="请选择不良类别" size="small">
+								<el-option :value="0" label="所有不良类别" ></el-option>
+								<el-option v-for="item in CategoryList" :key="item.LOOKUP_CODE" :label="item.CHINESE" :value="item.LOOKUP_CODE" ></el-option>
+							</el-select>
+							<el-select v-model="fectVal.DEFECT_LEVEL_CODE" class="filter-item" style="width:150px" placeholder="请选择不良等级" size="small">
+								<el-option :value="0" label="所有不良等级" ></el-option>
+								<el-option v-for="item in LevelList" :key="item.LOOKUP_CODE" :label="item.CHINESE" :value="item.LOOKUP_CODE" ></el-option>
+							</el-select>
+							<el-button type="primary" icon="el-icon-search" @tap.native="badTable_search" size="small">搜索</el-button>
+							<el-button type="success" @tap.native="badClick" size="small">确定</el-button>
+						</div>
+						<div class="container-table" style="height: 70vh;">
+							<el-table v-loading="badLoading" :data="badTable" width="100%" height="100%" highlight-current-row border class="bad-table "
+							 :header-cell-style="{background:'#eef1f6',color:'#606266'}" @row-click="badDetails" @cell-dblclick="baddblclick">
+								<el-table-column label="选择" width="50" align="center" fixed="left">
+									<template slot-scope="scope">
+										<el-radio v-model="badradio" class="radio" :label="scope.$index" ></el-radio>
+									</template>
+								</el-table-column>
+								<el-table-column :label="'序号'" align="center" width="80" fixed="left">
+									<template slot-scope="scope">{{ scope.$index+1 }}</template>
+								</el-table-column>
+
+								<el-table-column prop="DEFECT_TYPE_NAME" :label="'不良类型'" align="center" :show-overflow-tooltip="true" ></el-table-column>
+
+								<el-table-column prop="DEFECT_CATEGORY_NAME" :label="'不良类别'" align="center" :show-overflow-tooltip="true" ></el-table-column>
+
+								<el-table-column prop="DEFECT_CLASS_NAME" :label="'不良种类'" align="center" :show-overflow-tooltip="true" ></el-table-column>
+								<el-table-column prop="LEVEL_CODE_NAME" :label="'不良等级'" align="center" :show-overflow-tooltip="true" ></el-table-column>
+								<el-table-column prop="DEFECT_CODE" :label="'不良代码'" align="center" :show-overflow-tooltip="true" ></el-table-column>
+								<el-table-column prop="CHINESE_DESCRIPTION" :label="'不良名称'" align="center" :show-overflow-tooltip="true" ></el-table-column>
+							</el-table>
+						</div>
+					</el-dialog>
+				</el-dialog>
+			</div>
+		</div>
+		<script type="text/javascript" charset="utf-8">
+			mui.init({
+				// pullRefresh: {
+				// 	container: '#app',
+				// 	down: {
+				// 		style: 'circle', //必选，下拉刷新样式，目前支持原生5+ ‘circle’ 样式
+				// 		color: '#2BD009', //可选，默认“#2BD009” 下拉刷新控件颜色
+				// 		height: '50px', //可选,默认50px.下拉刷新控件的高度,
+				// 		range: '100px', //可选 默认100px,控件可下拉拖拽的范围
+				// 		offset: '0px', //可选 默认0px,下拉刷新控件的起始位置
+				// 		auto: false, //可选,默认false.首次加载自动上拉刷新一次
+				// 		callback: function() {
+				// 			vm.resetListQuery()
+				// 			vm.getIndex()
+				// 			vm.getLoadData(true)
+				// 			vm.computedTableHeight()
+				// 		} //必选，刷新函数，根据具体业务来编写，比如通过ajax从服务器获取新数据；
+				// 	}
+				// }
+			});
+		</script>
+		<script>
+			var vm = new Vue({
+				el: '#app',
+				data: {
+					tableHeight: '350px',
+					Loading: false,
+					childLoading: false,
+					addorediText: '',
+					listQuery: {
+						Page: 1,
+						Limit: 15,
+						LINE_ID: 0, // 线
+						STATUS: -1, // 状态
+						WO_NO: '', // 工单号
+						RESULT: -1 // 结果
+					},
+					mainSTATUS: 0,
+					total: 0, // 总页
+					radio: '',
+					Categ: [],
+					statusList: [{
+							ID: -1,
+							LINE_NAME: '全部状态'
+						},
+						{
+							ID: 0,
+							LINE_NAME: '初始'
+						},
+						{
+							ID: 3,
+							LINE_NAME: '已审核'
+						}
+					],
+					typeOptions: [{
+							STATUS: -1,
+							display_name: '全部结果'
+						},
+						{
+							STATUS: 0,
+							display_name: '合格'
+						},
+						{
+							STATUS: 1,
+							display_name: '特采'
+						},
+						{
+							STATUS: 2,
+							display_name: '返工'
+						},
+						{
+							STATUS: 3,
+							display_name: '报废'
+						}
+					],
+					mainTable: [],
+					childTable: [],
+					// 主表编辑和添加下拉
+					innerVisible: false,
+					form: {
+						LINE_ID: 0,
+						WO_NO: '',
+						PART_NO: '',
+						PART_NAME: '',
+						PART_DESC: '',
+						ALL_QTY: '',
+						CHECK_QTY: '',
+						LINE_TYPE: 'PCBA'
+					},
+					rules: {
+						LINE_ID: [{
+							required: true,
+							message: '请选择产线',
+							trigger: 'change'
+						}],
+						WO_NO: [{
+							required: true,
+							message: '请输入工单号',
+							trigger: 'blur'
+						}],
+						PART_NO: [{
+							required: true,
+							message: '料号不能为空',
+							trigger: 'blur'
+						}],
+						PART_NAME: [{
+							required: true,
+							message: '品名不能为空',
+							trigger: 'blur'
+						}],
+						PART_DESC: [{
+							required: true,
+							message: '规格不能为空',
+							trigger: 'blur'
+						}],
+
+						ALL_QTY: [{
+							required: true,
+							message: '请输入送检数',
+							trigger: 'blur'
+						}],
+						CHECK_QTY: [{
+							required: true,
+							message: '请输入抽检数',
+							trigger: 'blur'
+						}]
+					},
+					// 抽检记录
+					checkText: '',
+					checkVisible: false,
+					checkform: {
+						ID: 0,
+						BATCH_NO: '', // 抽检批次号
+						SN: '', // 流水号
+						STATUS: 'FAIL', // 状态
+						DEFECT_CODE: '', // 不良代码
+						DEFECT_LOC: '', // 不良位号
+						DEFECT_DESCRIPTION: '', // 不良描述
+						DEFECT_MSG: '', // 不良想象
+						CREATOR: ''
+					},
+					// 不良信息
+					badLoading: false,
+					badVisible: false,
+					badradio: '',
+					badTable: [],
+					TypeList: [],
+					ClassList: [],
+					CategoryList: [],
+					LevelList: [],
+					fectVal: {
+						Page: 1,
+						Limit: 10,
+						DEFECT_TYPE: 0,
+						DEFECT_CLASS: 0,
+						DEFECT_CATEGORY: 0,
+						DEFECT_LEVEL_CODE: 0
+					},
+					fectValtotal: 0,
+					reviewForm: {
+						ResultStatus: 0,
+						Batch: '',
+						AuditUser: ''
+					},
+					reviewVisible: false,
+					badArr: [],
+					drawer: false,
+					formName: '',
+					field: ''
+				},
+				computed: {
+					userinfo: function() {
+						var userinfo = window.localStorage.getItem('Userinfo')
+						userinfo = userinfo ? JSON.parse(userinfo) : {};
+						return userinfo
+					}
+				},
+				methods: {
+					// 开启扫描
+					openBarcode: function(formName, field) {
+						this.formName = formName
+						this.field = field
+						createWithoutTitle('/pages/barcode_scan.html', {
+							titleNView: {
+								type: 'float',
+								backgroundColor: 'rgb(34, 34, 34)',
+								titleText: '扫一扫',
+								titleColor: '#FFFFFF',
+								autoBackButton: true
+							}
+						});
+					},
+					resetListQuery: function() {
+						this.listQuery = {
+							Page: 1,
+							Limit: 15,
+							LINE_ID: 0, // 线
+							STATUS: -1, // 状态
+							WO_NO: '', // 工单号
+							RESULT: -1 // 结果
+						}
+					},
+					goBack: function() {
+						mui.back()
+					},
+					getIndex: function(isPullFresh) {
+						var that = this
+						http({
+							url: 'MesSpotcheckHeader/Index',
+							method: 'get',
+							params: {},
+							success: function(res) {
+								if (res.Result) {
+									that.Categ = res.Result
+								}
+							}
+						})
+					},
+					getLoadData: function(isPullFresh) {
+						var that = this
+						that.Loading = true
+						http({
+							url: 'MesSpotcheckHeader/LoadData',
+							method: 'get',
+							params: that.listQuery,
+							success: function(res) {
+								if (isPullFresh) {
+									mui('#app').pullRefresh().endPulldown()
+								}
+								that.Loading = false
+								that.mainTable = JSON.parse(res.Result) || []
+								that.total = res.TotalCount || 0
+							},
+							error: function(error) {
+								if (isPullFresh) {
+									mui('#app').pullRefresh().endPulldown()
+								}
+								that.Loading = false
+							}
+						})
+					},
+					handleCurrentChange: function(Page) {
+						this.listQuery.Page = Page
+						this.getLoadData()
+					},
+					handleSizeChange: function(Limit) {
+						this.listQuery.Page = 1
+						this.listQuery.Limit = Limit
+						this.getLoadData()
+					},
+					computedTableHeight: function() {
+						var windowHeight = document.body.clientHeight || document.documentElement.clientHeight
+						this.tableHeight = (windowHeight - 54 - 20 - 42 - 200) + 'px'
+					},
+					searchClick: function() {
+						this.listQuery.Page = 1
+						this.getLoadData()
+						this.drawer = false
+					},
+					openDetails: function(e) {
+						var row = e.row
+						var $rowIndex = e.$rowIndex
+						this.mainSTATUS = row.STATUS
+						this.reviewForm.Batch = row.BATCH_NO
+						// this.radio = this.mainTable.indexOf(row)
+						this.radio = $rowIndex
+						this.getDatail(row.BATCH_NO)
+					},
+					// 获取明细数据
+					getDatail: function(id) {
+						var that = this
+						http({
+							url: 'MesSpotcheckHeader/GetDatailData',
+							params: {
+								batch: id
+							},
+							method: 'get',
+							success: function(res) {
+								if (res.Result) {
+									var data = JSON.parse(res.Result)
+									that.childTable = data
+								}
+							}
+						})
+					},
+					// 输入工单回车
+					WorkOrder: function() {
+						if (!this.form.WO_NO) {
+							plus.nativeUI.toast('请输入工单号')
+							tips('error')
+							return false
+						}
+						var that = this
+						http({
+							url: 'MesSpotcheckHeader/GetPartDataByWoNo',
+							params: {
+								wo_no: that.form.WO_NO
+							},
+							method: 'get',
+							success: function(res) {
+								if (res.Result) {
+									var data = JSON.parse(res.Result)
+									that.form.PART_NO = data.PART_NO
+									that.form.WO_NO = data.WO_NO
+									that.form.PART_NAME = data.PART_NAME
+									that.form.PART_DESC = data.PART_DESC
+								} else {
+									tips('error')
+									plus.nativeUI.toast('工单号不存在，请重新输入！')
+								}
+							}
+						})
+					},
+					// 主表编辑
+					edit_but: function(row) {
+						this.form.LINE_ID = row.LINE_ID
+						this.form.WO_NO = row.WO_NO
+						this.form.PART_NO = row.PART_NO
+						this.form.PART_NAME = row.PART_NAME
+						this.form.PART_DESC = row.PART_DESC
+						this.form.ALL_QTY = row.ALL_QTY
+						this.form.CHECK_QTY = row.CHECK_QTY
+						this.form.LINE_TYPE = row.LINE_TYPE
+						if (row.STATUS !== 0) {
+							plus.nativeUI.toast('当前单据不是初始状态，无法修改！')
+							tips('error')
+							return
+						}
+						this.addorediText = '编辑'
+						this.innerVisible = true
+					},
+					// 主表添加
+					add_but: function() {
+						this.Eliminate()
+						this.addorediText = '添加检验单'
+						this.innerVisible = true
+					},
+					// 主表删除
+					remove_but: function(row) {
+						if (row.STATUS !== 0) {
+							plus.nativeUI.toast('当前单据不是初始状态，无法删除！')
+							tips('error')
+							return
+						}
+						var that = this
+						plus.nativeUI.confirm('确定删除《' + row.BATCH_NO + '》抽检单？', function(e) {
+							if (e.index === 0) {
+								http({
+									url: 'MesSpotcheckHeader/DeleteOneById?id=' + row.BATCH_NO,
+									method: 'post',
+									params: {},
+									success: function(res) {
+										if (res.Result) {
+											that.getLoadData()
+											plus.nativeUI.alert('删除成功', function() {}, '成功')
+											tips('success')
+										} else {
+											tips('error')
+											plus.nativeUI.alert('删除失败', function() {}, '失败')
+										}
+									}
+								})
+							}
+						}, "确认", ["确定", "取消"])
+					},
+					// 主表重置
+					reset_but: function() {
+						this.form.WO_NO = ''
+						this.form.PART_NO = ''
+						this.form.PART_NAME = ''
+						this.form.PART_DESC = ''
+						this.form.ALL_QTY = ''
+						this.form.CHECK_QTY = ''
+						this.form.LINE_TYPE = ''
+					},
+					// 主表清空
+					Eliminate: function() {
+						this.form = {
+							LINE_ID: '',
+							WO_NO: '',
+							PART_NO: '',
+							PART_NAME: '',
+							PART_DESC: '',
+							ALL_QTY: '',
+							CHECK_QTY: '',
+							LINE_TYPE: 'PCBA'
+						}
+					},
+					// 审核
+					reviewClick: function() {
+						if (this.reviewForm.Batch === '') {
+							plus.nativeUI.toast('请选择需要审核的数据！')
+							tips('error')
+							return
+						}
+						if (this.mainSTATUS !== 0) {
+							plus.nativeUI.toast('当前单据不是初始状态，无法审核')
+							tips('error')
+							return
+						}
+						this.reviewVisible = true
+					},
+					// 审核提交
+					ReviewSubmit: function() {
+						var that = this
+						plus.nativeUI.confirm('确定审核《' + this.reviewForm.Batch + '》抽检单？', function(e) {
+							if (e.index === 0) {
+								http({
+									url: 'MesSpotcheckHeader/AuditSpotCheck',
+									method: 'post',
+									params: that.reviewForm,
+									success: function(res) {
+										if (res.Result) {
+											that.getLoadData()
+											plus.nativeUI.alert('审核成功', function() {}, '成功')
+											tips('success')
+										} else {
+											plus.nativeUI.alert('审核失败', function() {}, '失败')
+											tips('error')
+										}
+									}
+								})
+							}
+						}, "确认", ["确定", "取消"])
+					},
+					// 主表确定
+					shout_but: function(formName) {
+						if (this.form.ALL_QTY <= 0) {
+							plus.nativeUI.toast('送检数不能为0或者小于0！')
+							tips('error')
+							return false
+						}
+						if (this.form.CHECK_QTY <= 0) {
+							plus.nativeUI.toast('抽检数不能为0或者小于0！')
+							tips('error')
+							return false
+						}
+						var Textsuccess = ''
+						if (this.form.Id === 0) {
+							Textsuccess = '添加成功'
+						} else {
+							Textsuccess = '修改成功'
+						}
+						var that = this
+						this.$refs.form.validate(function(valid, errInfo) {
+							if (valid) {
+								http({
+									url: 'MesSpotcheckHeader/AddOrModifySave',
+									method: 'post',
+									params: that.form,
+									success: function(res) {
+										if (res.Result) {
+											that.innerVisible = false
+											that.getList()
+											plus.nativeUI.alert('操作成功', function() {}, '成功')
+											tips('success')
+										}
+									}
+								})
+							} else {
+								try {
+									Object.keys(errInfo).forEach(function(item) {
+										plus.nativeUI.toast(errInfo[item][0].message)
+										throw new Error(new Date().toLocaleString())
+									})
+								} catch (e) {
+									console.log(e.message)
+								}
+							}
+						})
+					},
+					// 主表重置
+					reset_but: function() {
+						this.form.WO_NO = ''
+						this.form.PART_NO = ''
+						this.form.PART_NAME = ''
+						this.form.PART_DESC = ''
+						this.form.ALL_QTY = ''
+						this.form.CHECK_QTY = ''
+						this.form.LINE_TYPE = ''
+					},
+					// 抽检记录
+					Spotcheck_but: function(row) {
+						if (row.STATUS !== 0) {
+							plus.nativeUI.toast('当前单据不是初始状态，无法添加抽检明细！')
+							tips('error')
+							return false
+						}
+						this.clear()
+						this.checkform.BATCH_NO = row.BATCH_NO
+						this.checkText = '新增'
+						this.checkVisible = true
+					},
+					// 获取下拉列表
+					SelectDefect: function() {
+						var that = this
+						http({
+							url: 'MesSpotcheckHeader/SelectDefectIndex',
+							params: {},
+							method: 'get',
+							success: function(res) {
+								if (res.Result) {
+									var data = res.Result
+									that.TypeList = data.TypeList
+									that.ClassList = data.ClassList
+									that.CategoryList = data.CategoryList
+									that.LevelList = data.LevelList
+								}
+							}
+						})
+					},
+					// 不良代码触发事件并获取
+					defect_but: function() {
+						this.getLoadDefectData()
+						this.badVisible = true
+					},
+					// 获取不良table
+					getLoadDefectData: function() {
+						var that = this
+						http({
+							url: 'MesSpotcheckHeader/LoadDefectData',
+							method: 'get',
+							params: that.fectVal,
+							success: function(res) {
+								if (res.Result) {
+									that.badTable = JSON.parse(res.Result)
+									that.fectValtotal = res.TotalCount || 0
+								}
+							}
+						})
+					},
+					fectValhandleSizeChange: function(row) {
+						this.fectVal.Page = 1
+						this.fectVal.Limit = row
+						this.getLoadDefectData()
+					},
+					fectValhandleCurrentChange: function(val) {
+						this.fectVal.Page = val
+						this.getLoadDefectData()
+					},
+					// 抽筋记录和子表编辑提交
+					check_shout_but: function() {
+						if (this.checkform.STATUS === 'PASS') {
+							if (
+								this.checkform.DEFECT_CODE === '' ||
+								this.checkform.DEFECT_CODE === null
+							) {
+								plus.nativeUI.toast('请输入不良信息！')
+								tips('error')
+								return false
+							}
+						}
+						var that = this
+						http({
+							url: 'MesSpotcheckHeader/AddOrEditDetail',
+							params: that.checkform,
+							method: 'post',
+							success: function(res) {
+								if (res.Result) {
+									that.checkVisible = false
+									plus.nativeUI.alert('提交成功', function() {}, '成功')
+									that.getList()
+									if (that.reviewForm.Batch) {
+										that.getDatail(that.reviewForm.Batch)
+									}
+								} else {
+									plus.nativeUI.alert('提交失败', function() {}, '失败')
+									that.checkVisible = false
+									that.getList()
+								}
+							},
+							error: function() {
+								that.checkVisible = false
+								that.getList()
+							}
+						})
+					},
+					// 重置
+					check_reset_but: function() {
+						this.checkform.SN = '' // 流水号
+						this.checkform.STATUS = 'FAIL' // 状态
+						this.checkform.DEFECT_CODE = '' // 不良代码
+						this.checkform.DEFECT_LOC = '' // 不良位号
+						this.checkform.DEFECT_DESCRIPTION = '' // 不良描述
+						this.checkform.DEFECT_MSG = '' // 不良想象
+					},
+					// 点击选中不良项
+					badDetails: function(row) {
+						this.badradio = this.badTable.indexOf(row)
+						this.badArr = row
+					},
+					badClick: function() {
+						if (this.badArr.length !== 0) {
+							this.checkform.DEFECT_CODE = this.badArr.DEFECT_CODE
+							this.checkform.DEFECT_DESCRIPTION = this.badArr.DEFECT_DESCRIPTION
+							this.badVisible = false
+							this.badradio = ''
+						} else {
+							plus.nativeUI.toast('请选择不良信息')
+							tips('error')
+						}
+					},
+					// 双击事件选中
+					baddblclick: function(row) {
+						this.checkform.DEFECT_CODE = row.DEFECT_CODE
+						this.checkform.DEFECT_DESCRIPTION = row.DEFECT_DESCRIPTION
+						this.badVisible = false
+						this.badradio = ''
+					},
+					// 搜索
+					badTable_search: function() {
+						this.fectVal.Page = 1
+						this.getLoadDefectData()
+					},
+					// 子表编辑
+					child_edit_but: function(row) {
+						this.checkform.ID = row.ID
+						this.checkform.SN = row.SN
+						this.checkform.STATUS = row.STATUS
+						this.checkform.DEFECT_CODE = row.DEFECT_CODE
+						this.checkform.DEFECT_LOC = row.DEFECT_LOC
+						this.checkform.DEFECT_DESCRIPTION = row.DEFECT_DESCRIPTION
+						this.checkform.DEFECT_MSG = row.DEFECT_MSG
+						this.checkText = '修改'
+						this.checkVisible = true
+					},
+					// 子表删除
+					child_remove_but: function(row) {
+						var clidVal = {
+							ID: row.ID,
+							Batch: row.BATCH_NO
+						}
+						var that = this
+						plus.nativeUI.confirm('确定删除当前选中的数据？', function(e) {
+							if (e.index === 0) {
+								http({
+									url: 'MesSpotcheckHeader/DeleteDetail',
+									method: 'post',
+									params: clidVal,
+									success: function(res) {
+										if (res.Result) {
+											plus.nativeUI.alert('删除成功', function() {
+												that.getDatail(that.reviewForm.Batch)
+											}, '成功')
+										}
+									}
+								})
+							}
+						}, "确认", ["确定", "取消"])
+					},
+					// 主表清空
+					Eliminate: function() {
+						this.form = {
+							LINE_ID: '',
+							WO_NO: '',
+							PART_NO: '',
+							PART_NAME: '',
+							PART_DESC: '',
+							ALL_QTY: '',
+							CHECK_QTY: '',
+							LINE_TYPE: 'PCBA'
+						}
+					},
+					clear: function() {
+						this.fectVal = {
+							Page: 1,
+							Limit: 10,
+							DEFECT_TYPE: 0,
+							DEFECT_CLASS: 0,
+							DEFECT_CATEGORY: 0,
+							DEFECT_LEVEL_CODE: 0
+						}
+					}
+				},
+				created: function() {
+
+				}
+			})
+
+			mui.plusReady(function() {
+				var _selfWebview = plus.webview.currentWebview()
+				vm.getIndex()
+				vm.getLoadData()
+				vm.computedTableHeight()
+			})
+			document.addEventListener('refresh', function(e) {
+				vm.getIndex()
+				vm.getLoadData()
+				vm.computedTableHeight()
+			})
+			// 扫码回调
+			function scaned(t, r, f) {
+				vm.$set(vm[vm.formName], vm.field , r)
+				if (vm.formName === 'form' && vm.field === 'WO_NO') {
+					vm.WorkOrder()
+				}
+			}
+		</script>
+	</body>
+</html>

@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<script src="../../js/qs.js"></script>
+		<!-- 引入vue -->
+		<script src="../../js/vue.min.js"></script>
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../../css/elementUi.min.css">
+		<link rel="stylesheet" href="../../css/vant.min.css" />
+		<script src="../../js/common.js"></script>
+		<!-- 引入组件库 -->
+		<script src="../../js/elementUi.min.js"></script>
+		<script src="../../js/vant.min.js"></script>
+		<script src="../../js/mui.min.js"></script>
+		<link href="../../css/mui.min.css" rel="stylesheet" />
+		<script src="../../js/utils.js"></script>
+		<link rel="stylesheet" href="../../css/MesProductionPreMst.css">
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="../../css/vxe-table-2.9.5.min.css">
+		<!-- 引入脚本 -->
+		<script src="../../js/day.js"></script>
+		<script src="../../js/xe-utils.min.js"></script>
+		<script src="../../js/vxe-table-2.9.5.min.js"></script>
+		<script src="../../js/es5-shim.min.js"></script>
+		<script src="../../js/promise-6.1.0.js"></script>
+		<style>
+			/** 全局 dialog header 样式  */
+			.el-dialog__header {
+			  background: rgb(236, 241, 246);
+			}
+			.el-dialog__header .el-dialog__title {
+			  color: #606266;
+			}
+			.el-dialog__body {
+				padding: 10px 20px;
+			}
+			.el-dialog {
+				margin-top: 5vh!important;
+				margin: 0 auto 0;
+			}
+		</style>
+		<script>
+			if('addEventListener' in document) {
+			     document.addEventListener('DOMContentLoaded',function() {
+			     FastClick.attach(document.body);
+			   },false);
+			}
+		</script>
+	</head>
+	<body>
+		<div class="page" id="app">
+			<div class="custom-container-full">
+				<div class="custom-container-full__header" ref="header">
+					<div>
+						<div class="custom-container-header">
+							<div class="transform-cx">
+								<div class="cch-block">
+									<el-page-header @back="goBack" content="">
+										<template #content>
+											<!-- <el-button style="float: right; padding: 3px 0" type="text" @click.stop="showCheckFormPicker=true" v-if="form.BATCH_NO">添加抽检记录</el-button> -->
+										</template>
+									</el-page-header>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="custom-container-full__body" ref="body">
+					<div class="block-one">
+						<el-form :show-message="false" :model="form" ref="ruleForm" label-width="120px" size="mini">
+							<el-row>
+								<el-col :span="12">
+									<el-form-item label="线体" prop="LINE_NAME">
+										<el-input v-model="form.LINE_NAME" readonly clickable @click.native="showLinePicker=true" clearable></el-input>
+									</el-form-item>
+									<el-form-item label="工单" prop="WO_NO">
+										<el-input v-model="form.WO_NO" placeholder="请输入工单号" @change="dealWoNo"></el-input>
+									</el-form-item>
+									<el-form-item label="料号" prop="PART_NO">
+										<el-input v-model="form.PART_NO" placeholder="料号自动带出"></el-input>
+									</el-form-item>
+									<el-form-item label="品名" prop="PART_NAME">
+										<el-input v-model="form.PART_NAME" readonly placeholder="品名自动带出" />
+									</el-form-item>
+									<el-form-item label="规格" prop="PART_DESC">
+										<el-input v-model="form.PART_DESC" placeholder="规格自动带出"></el-input>
+									</el-form-item>
+									<el-form-item label="批量" prop="WO_QTY">
+										<el-input v-model="form.WO_QTY" placeholder="请输入批量" type="number"></el-input>
+									</el-form-item>
+								</el-col>
+								<el-col :span="12">
+									<el-form-item label="班次" prop="WO_CLASS">
+										<el-radio v-model="form.WO_CLASS" :label="1">A班</el-radio>
+										<el-radio v-model="form.WO_CLASS" :label="2">B班</el-radio>
+									</el-form-item>
+									<el-form-item label="送检数" prop="ALL_QTY">
+										<el-input type="number" v-model="form.ALL_QTY" placeholder="请输入送检数" type="number"></el-input>
+									</el-form-item>
+									<el-form-item label="功能抽检数" prop="CHECK_QTY">
+										<el-input type="number" v-model="form.CHECK_QTY" placeholder="请输入功能送检数" type="number"></el-input>
+									</el-form-item>
+									<el-form-item label="外观抽检数" prop="OUTER_CHECK_QTY">
+										<el-input type="number" v-model="form.OUTER_CHECK_QTY" placeholder="请输入外观送检数" type="number"></el-input>
+									</el-form-item>
+								</el-col>
+							</el-row>
+							<el-form-item label="备注" prop="REMARK">
+								<el-input type="textarea" placeholder="请输入内容" v-model="form.REMARK" maxlength="30" show-word-limit>
+								</el-input>
+							</el-form-item>
+						</el-form>
+					</div>
+
+					<div :style="{
+					      height: tableHeight
+					    }">
+						<el-card class="box-card" style="flex: 1;background-color: #d2d2d2;">
+							<div slot="header" class="clearfix">
+								<span>内容明细</span>
+							</div>
+							<div style="padding: 5px;width: 100%;height: 100%;">
+								<el-card v-for="(dataItem,index) in details" :key="dataItem.ID" :style="{
+									marginBottom: index < details.length -1 ? '10px':0
+								}">
+									<div style="display: flex;">
+										<div style="width: 40px;border-right: #ebeef5 1px solid;display: flex;align-items: center;justify-content: center;">
+											{{index + 1}}
+										</div>
+										<div style="flex: 1;padding-left: 10px;">
+											<el-form label-width="80px" size="small">
+												<el-form-item label="产品流水号">
+													<el-input v-model="dataItem.SN" placeholder="请输入内容"></el-input>
+												</el-form-item>
+												<el-form-item label="抽检状态">
+													<el-switch v-model="dataItem.STATUS" active-color="#67C23A" inactive-color="#F56C6C" active-value="PASS"
+													 inactive-value="FAIL" :active-text="dataItem.RESULT === 'PASS' ? '正常' : '异常'">
+													</el-switch>
+												</el-form-item>
+												<el-form-item label="不良代码">
+													<el-input v-model="dataItem.DEFECT_CODE" placeholder="请输入内容"></el-input>
+												</el-form-item>
+												<el-form-item label="不良位号">
+													<el-input v-model="dataItem.DEFECT_LOC" placeholder="请输入内容"></el-input>
+												</el-form-item>
+												<el-form-item label="不良描述">
+													<el-input v-model="dataItem.DEFECT_DESCRIPTION" placeholder="请输入内容"></el-input>
+												</el-form-item>
+												<el-form-item label="不良现象">
+													<el-input v-model="dataItem.DEFECT_MSG" placeholder="请输入内容"></el-input>
+												</el-form-item>
+												<el-form-item label="抽检时间">
+													<!-- <el-radio label="Y" v-model="dataItem.RESULT">
+														<span style="color: #67C23A">合格</span>
+													</el-radio>
+													<el-radio label="N" v-model="dataItem.RESULT">
+														<span style="color: #F56C6C">不合格</span>
+													</el-radio> -->
+
+												</el-form-item>
+												<el-form-item label="抽检人">
+													<el-input type="textarea" :rows="2" v-model="dataItem.CREATOR" placeholder="请输入内容"></el-input>
+												</el-form-item>
+											</el-form>
+										</div>
+									</div>
+								</el-card>
+							</div>
+						</el-card>
+					</div>
+				</div>
+				<div style="display: flex;" class="order-bottom-cell-button">
+					<el-button type="primary" icon="el-icon-circle-check" @tap.native="savedata_but" size="small">保存</el-button>
+					<el-button type="success" icon="el-icon-circle-check" @tap.native="submit_but" size="small" v-if="form.WO_NO">添加抽检记录</el-button>
+				</div>
+			</div>
+			<!-- 弹窗表单 -->
+
+			<van-popup v-model="showLinePicker" round position="bottom">
+				<van-picker show-toolbar :columns="line" value-key="LINE_NAME" title="线别" item-height="40" visible-item-count="10"
+				 @cancel="showLinePicker = false" @confirm="dealLinePicker" />
+			</van-popup>
+
+			<van-popup v-model="showCheckFormPicker" position="bottom">
+				<div style="padding:20px 20px 0px 20px;">
+					<el-form class="custom-form" ref="formData" label-position="left" label-width="6rem" :model="checkFormData" size="mini">
+						<el-form-item label="生产流水号">
+							<el-input v-model="checkFormData.SN" placeholder="请输入产品流水号"></el-input>
+						</el-form-item>
+						<el-form-item label="抽检状态" prop="STATUS">
+							<el-radio v-model="checkFormData.STATUS" label='PASS'>正常</el-radio>
+							<el-radio v-model="checkFormData.STATUS" label='FAIL'>异常</el-radio>
+						</el-form-item>
+						<template v-if="checkFormData.STATUS == 'FAIL'">
+							<el-form-item label="不良代码">
+								<el-input v-model="checkFormData.DEFECT_CODE" readonly placeholder="请输入不良代码" clickable @click.native="showDefectCodePicker=true"
+								 clearable />
+							</el-form-item>
+							<el-form-item label="不良位号">
+								<el-input v-model="checkFormData.DEFECT_LOC" placeholder="请输入不良位号" />
+							</el-form-item>
+							<el-form-item label="不良描述">
+								<el-input v-model="checkFormData.DEFECT_DESCRIPTION" readonly placeholder="请输入不良描述" />
+							</el-form-item>
+							<el-form-item label="不良现象">
+								<el-input v-model="checkFormData.DEFECT_MSG" placeholder="请输入不良现象" />
+							</el-form-item>
+						</template>
+					</el-form>
+					<el-row gutter="0" style="margin-top: 10px;">
+						<el-col span="12">
+							<el-button type="primary" style="width:100%;border-radius: 4px 0px 0px 4px;">搜索</el-button>
+						</el-col>
+						<el-col span="12">
+							<el-button type="danger" style="width:100%;border-radius: 0px 4px 4px 0px;">重置</el-button>
+						</el-col>
+					</el-row>
+				</div>
+			</van-popup>
+			<van-popup v-model="showDefectCodePicker" round position="bottom">
+				<van-picker show-toolbar title="选择不良信息" :columns="badColumns" value-key="CHINESE_DESCRIPTION" item-height="40"
+				 visible-item-count="10" @cancel="showDefectCodePicker = false" @confirm="dealDefectCodePicker" />
+			</van-popup>
+		</div>
+		<script>
+			mui.init({
+
+			})
+		</script>
+		<script>
+			var app = new Vue({
+				el: '#app',
+				data: {
+					line: [],
+					badColumns: [],
+					form: {
+						BATCH_NO: '',
+						LINE_ID: 0,
+						LINE_NAME: '',
+						WO_NO: '',
+						PART_NO: '',
+						PART_NAME: '',
+						PART_DESC: '',
+						ALL_QTY: '',
+						CHECK_QTY: '',
+						LINE_TYPE: 'PCBA',
+						WO_QTY: '',
+						REMARK: '',
+						WO_CLASS: '',
+						OUTER_CHECK_QTY: '',
+						CREATOR: ''
+					},
+					details: [],
+					checkFormData: {
+						ID: 0,
+						BATCH_NO: '', // 抽检批次号
+						SN: '', // 流水号
+						STATUS: 'PASS', // 状态
+						DEFECT_CODE: '', // 不良代码
+						DEFECT_LOC: '', // 不良位号
+						DEFECT_DESCRIPTION: '', // 不良描述
+						DEFECT_MSG: '', // 不良想象
+						CREATOR: ''
+					},
+					fectVal: {
+						Page: 1,
+						Limit: 10,
+						DEFECT_TYPE: 0,
+						DEFECT_CLASS: 0,
+						DEFECT_CATEGORY: 0,
+						DEFECT_LEVEL_CODE: 0
+					},
+					fectValtotal: 0,
+					tableHeight: '200px',
+					showLinePicker: false,
+					showCheckFormPicker: false,
+					showDefectCodePicker: false
+				},
+				computed: {
+					userinfo: function() {
+						var userinfo = window.localStorage.getItem('Userinfo')
+						userinfo = userinfo ? JSON.parse(userinfo) : {};
+						this.form.CREATOR = userinfo.USER_NAME
+						return userinfo
+					}
+				},
+				methods: {
+					computedHeight: function() {
+						var that = this
+						window.addEventListener('resize', function() {
+							that.computedHeight()
+						})
+						that.$nextTick(function() {
+							var formHeight = that.$refs.ruleForm.$el.offsetHeight
+							var windowHeight = document.body.clientHeight || document.documentElement.clientHeight
+							that.tableHeight = (windowHeight - 58 - formHeight - 20) + 'px'
+						})
+					},
+					// 开启扫描
+					openBarcode: function(field) {
+						this.field = field
+						createWithoutTitle('/pages/barcode_scan.html', {
+							titleNView: {
+								type: 'float',
+								backgroundColor: 'rgb(34, 34, 34)',
+								titleText: '扫一扫',
+								titleColor: '#FFFFFF',
+								autoBackButton: true
+							}
+						});
+					},
+					goBack: function() {
+						var webview = plus.webview.getWebviewById('IpqaMst')
+						mui.fire(webview, 'refresh')
+						mui.back()
+					},
+					// 获取下拉菜单和编辑的值
+					getAddRrList: function() {
+						this.getLine()
+						this.getLoadDefectData()
+					},
+					getLine: function() {
+						var that = this
+						http({
+							url: 'MesSpotcheckHeader/Index',
+							method: 'get',
+							params: that.listQuery,
+							success: function(res) {
+								that.line = res.Result
+							}
+						})
+					},
+					getLoadDefectData() {
+						var that = this
+						http({
+							url: 'MesSpotcheckHeader/LoadDefectData',
+							method: 'get',
+							params: that.fectVal,
+							success: function(res) {
+								that.badColumns = JSON.parse(res.Result)
+								that.fectValtotal = res.TotalCount
+							},
+							error: function() {
+
+							}
+						})
+					},
+					// 获取查询明细数据
+					getLoadDtlData: function() {
+						var that = this
+						http({
+							url: 'MesSpotcheckHeader/GetDatailData',
+							params: {
+								batch: that.form.BATCH_NO
+							},
+							method: 'get',
+							success: function(res) {
+								that.details = res.Result ? JSON.parse(res.Result) : []
+							}
+						})
+					},
+
+					//自动处理工单
+					dealWoNo: function() {
+						var that = this
+						if (this.form.WO_NO !== '') {
+							http({
+								url: 'MesSpotcheckHeader/GetPartDataByWoNo',
+								method: 'get',
+								params: {
+									wo_no: that.form.WO_NO
+								},
+								success: function(res) {
+									const data = JSON.parse(res.Result)
+									if (data) {
+										that.form.PART_NO = data.PART_NO
+										that.form.WO_NO = data.WO_NO
+										that.form.PART_NAME = data.PART_NAME
+										that.form.PART_DESC = data.PART_DESC
+									} else {
+										that.form.WO_NO = ''
+										that.$message({
+											showClose: true,
+											type: 'warning',
+											message: '工单号不存在，请重新输入！'
+										})
+									}
+								},
+								error: function() {
+
+								}
+							})
+						}
+					},
+
+					// 保存
+					savedata_but: function() {
+						var that = this
+						if (that.form.ALL_QTY <= 0) {
+							that.$message({
+								showClose: true,
+								message: '送检数不能为0或者小于0！',
+								type: 'warning'
+							})
+							return false
+						}
+						if (that.form.CHECK_QTY <= 0) {
+							that.$message({
+								showClose: true,
+								message: '抽检数不能为0或者小于0！',
+								type: 'warning'
+							})
+							return false
+						}
+						var Textsuccess = ''
+						if (that.form.LINE_ID === '') {
+							Textsuccess = '添加成功'
+						} else {
+							Textsuccess = '修改成功'
+						}
+						this.$refs.ruleForm.validate(function(_valid, errInfo) {
+							if (_valid) {
+								http({
+									url: 'MesSpotcheckHeader/AddOrModifySave',
+									method: 'post',
+									params: that.form,
+									success: function(res) {
+										console.log(res.Result)
+									},
+									error: function() {
+
+									}
+								})
+							} else {
+
+							}
+						})
+					},
+					// 提交审核
+					submit_but: function() {
+						this.submit.ID = this.listQuery.id
+						this.submit.Operator = this.form.UserName
+						if (this.submit.ID <= 0 || !this.submit.ID) {
+							plus.nativeUI.toast('请先保存数据')
+							tips('error')
+							return false
+						}
+						var that = this
+						http({
+							url: 'IpqaMst/PostToCheck',
+							method: 'post',
+							params: that.submit,
+							success: function(res) {
+								if (res.Result) {
+									plus.nativeUI.alert('提交成功', function(e) {
+										that.goBack()
+									}, '成功')
+								}
+							}
+						})
+					},
+					// 确认
+					confirm_but: function() {
+						if (this.orderArr.length !== 0) {
+							this.form.PRODUCT_BILLNO = this.orderArr.WO_NO
+							this.form.PRODUCT_NAME = this.orderArr.PRODUCT_NAME
+							this.form.PRODUCT_MODEL = this.orderArr.MODEL
+							this.form.PRODUCT_QTY = this.orderArr.TARGET_QTY
+							this.form.PRODUCT_DATE = this.orderArr.START_DATE
+							if (this.ipqa_type === 0) {
+								this.IPQA_TYPE_Sele = 'SMT车间巡检'
+							} else {
+								this.IPQA_TYPE_Sele = '产线车间巡检'
+							}
+							this.dialogTableVisible = false
+						} else {
+							plus.nativeUI.toast('请选择工单')
+							tips('error')
+						}
+					},
+
+					dateFormat: function(fmt, date) {
+						let ret;
+						const opt = {
+							"Y+": date.getFullYear().toString(), // 年
+							"m+": (date.getMonth() + 1).toString(), // 月
+							"d+": date.getDate().toString(), // 日
+							"H+": date.getHours().toString(), // 时
+							"M+": date.getMinutes().toString(), // 分
+							"S+": date.getSeconds().toString() // 秒
+							// 有其他格式化字符需求可以继续添加，必须转化成字符串
+						};
+						for (let k in opt) {
+							ret = new RegExp("(" + k + ")").exec(fmt);
+							if (ret) {
+								fmt = fmt.replace(ret[1], (ret[1].length == 1) ? (opt[k]) : (opt[k].padStart(ret[1].length, "0")))
+							};
+						};
+						return fmt;
+					},
+					//格式化日期
+					formatter: function(day) {
+						return day
+					},
+
+					dealLinePicker: function(dataItem) {
+						this.form.LINE_ID = dataItem.ID
+						this.form.LINE_NAME = dataItem.LINE_NAME
+						this.form.LINE_TYPE = dataItem.LINE_TYPE
+						this.showLinePicker = false
+					},
+					dealDefectCodePicker: function(dataItem) {
+
+					},
+					setForm: function(row) {
+						this.form.LINE_ID = row.LINE_ID
+						this.form.WO_NO = row.WO_NO
+						this.form.PART_NO = row.PART_NO
+						this.form.PART_NAME = row.PART_NAME
+						this.form.PART_DESC = row.PART_DESC
+						this.form.ALL_QTY = row.ALL_QTY
+						this.form.CHECK_QTY = row.CHECK_QTY
+						this.form.LINE_TYPE = row.LINE_TYPE
+						this.form.WO_QTY = row.WO_QTY
+						this.form.WO_CLASS = row.WO_CLASS
+						this.form.REMARK = row.REMARK
+						this.form.OUTER_CHECK_QTY = row.OUTER_CHECK_QTY
+						this.form.BATCH_NO = row.BATCH_NO
+					}
+				},
+				created: function() {
+
+				}
+			})
+			mui.plusReady(function() {
+				var _selfWebview = plus.webview.currentWebview()
+				app.form.UserName = app.userinfo.USER_NAME
+				app.setForm(_selfWebview)
+				app.computedHeight()
+				app.getAddRrList()
+				app.getLoadDtlData()
+
+
+			})
+			document.addEventListener('refresh', function(e) {
+				var data = e.detail
+				app.form.UserName = app.userinfo.USER_NAME
+				app.setForm(_selfWebview)
+				app.computedHeight()
+				app.getAddRrList()
+				app.getLoadDtlData()
+
+			})
+
+			// 扫码回调
+			function scaned(t, r, f) {
+				app.$set(app.form, app.field, r)
+				// app.changeCODE()
+			}
+		</script>
+	</body>
+</html>
